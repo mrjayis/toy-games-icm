@@ -617,6 +617,32 @@ svg text {
   border-top: 1px solid var(--border);
   margin: 1.5rem 0;
 }
+
+/* ═══════════════════════════════════ SOURCE QUOTES ═══════════════════════════════════ */
+.source-quote {
+  border-left: 3px solid var(--gold-dim);
+  padding: 0.9rem 1.25rem;
+  margin: 1rem 0;
+  background: rgba(212,175,55,0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+.quote-text {
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--cream);
+  line-height: 1.6;
+  margin-bottom: 0.4rem;
+}
+
+.quote-source {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold-dim);
+}
 </style>
 </head>
 <body>
@@ -645,6 +671,10 @@ svg text {
     <div class="section-label">Foundations</div>
     <h1>Toy Games & GTO</h1>
     <p>Simplified poker models that let us solve strategy by hand — revealing the math behind solver outputs.</p>
+    <div class="source-quote" style="max-width:640px;margin:1.5rem auto 0;text-align:left;">
+      <div class="quote-text">"By reducing it to a toy game, we can solve it by hand, and learn the fundamental incentives of game theory optimal poker."</div>
+      <div class="quote-source">— GTOWizard · How to Solve Toy Games</div>
+    </div>
   </div>
 
   <div class="card">
@@ -782,10 +812,17 @@ svg text {
         </div>
       </div>
 
-      <div class="insight-box">
-        <strong>Key Insight:</strong> At equilibrium, the bluffer is perfectly indifferent —
-        EV of bluffing equals EV of checking (zero). Larger bets require proportionally more
-        bluffs in range to keep the caller indifferent.
+      <div class="source-quote">
+        <div class="quote-text">"Player 1 (acts first): Holds either AA or QQ at equal frequency. Player 2: Holds KK. The board is: 22233. The pot is 10, the stacks are 10."</div>
+        <div class="quote-source">— GTOWizard · How to Solve Toy Games · Example Setup</div>
+      </div>
+      <div class="source-quote">
+        <div class="quote-text">"If we check, KK will always check behind. It doesn't make sense for KK to bet as that would simply fold QQ and get called by AA."</div>
+        <div class="quote-source">— GTOWizard · How to Solve Toy Games · Eliminating Dominated Strategies</div>
+      </div>
+      <div class="source-quote">
+        <div class="quote-text">"Therefore, ⅓ of our betting range should be bluffs. If we always bet AA, then we need to balance by bluffing QQ half the time."</div>
+        <div class="quote-source">— GTOWizard · How to Solve Toy Games · Bluff-to-Value Ratio</div>
       </div>
     </div>
 
@@ -922,10 +959,17 @@ svg text {
       <div class="chart-wrap">
         <svg id="t-ev-curve" width="100%" height="320" viewBox="0 0 600 320"></svg>
       </div>
+      <div class="source-quote">
+        <div class="quote-text">"Optimal bet sizing is a function of nut advantage."</div>
+        <div class="quote-source">— GTOWizard · How to Solve Toy Games</div>
+      </div>
+      <div class="source-quote">
+        <div class="quote-text">"Calling% (c) = Max ( MDF, traps%) = Max (1/(1+s), 10%)"</div>
+        <div class="quote-source">— GTOWizard · How to Solve Toy Games · Modified Defense Formula</div>
+      </div>
       <div class="insight-box" id="t-insight">
-        <strong>Nut Advantage Principle:</strong> With <span id="t-insight-T">10%</span> traps,
-        optimal bet is <span id="t-insight-s">2.16x</span> pot. The bettor must balance value extraction
-        against getting stacked by traps. More traps = less nut advantage = smaller optimal bet.
+        With <span id="t-insight-T">10%</span> traps, the optimal bet is <span id="t-insight-s">2.16x</span> pot.
+        More traps = less nut advantage = smaller optimal bet.
       </div>
     </div>
   </div>
@@ -941,6 +985,16 @@ svg text {
 
   <div class="card">
     <h3>Zero-Sum vs Non-Zero-Sum</h3>
+    <div class="grid-2" style="margin-bottom:1.25rem;">
+      <div class="source-quote">
+        <div class="quote-text">"These guarantees only apply to heads-up (HU) zero-sum games!"</div>
+        <div class="quote-source">— GTOWizard · The Limitations of Nash Equilibrium in ICM Spots</div>
+      </div>
+      <div class="source-quote">
+        <div class="quote-text">"In tournaments, the sum of payoffs between two players in a pot is no longer zero. Some of their $EV can get leaked to the rest of the field."</div>
+        <div class="quote-source">— GTOWizard · The Limitations of Nash Equilibrium in ICM Spots</div>
+      </div>
+    </div>
     <table class="compare-table">
       <thead>
         <tr>
@@ -957,10 +1011,13 @@ svg text {
         <tr><td>EV leakage</td><td class="yes">✓ None</td><td class="no">✗ Leaks to uninvolved players</td></tr>
       </tbody>
     </table>
-    <div class="insight-box">
-      <strong>The Core Problem:</strong> When two players contest a pot in a tournament, the entire field
-      gains EV regardless of the outcome. Chips won are worth <em>less</em> than chips lost because
-      doubling your stack doesn't double your tournament equity.
+    <div class="source-quote" style="margin-top:1rem;">
+      <div class="quote-text">"If the sum of payoffs (between the two active players) is not zero, things break!"</div>
+      <div class="quote-source">— GTOWizard · The Limitations of Nash Equilibrium in ICM Spots</div>
+    </div>
+    <div class="source-quote">
+      <div class="quote-text">"Nash Equilibrium still works and is well-defined in non-zero-sum games. Your opponents cannot gain EV against a GTO strategy. But the aforementioned guarantees no longer hold."</div>
+      <div class="quote-source">— GTOWizard · The Limitations of Nash Equilibrium in ICM Spots</div>
     </div>
   </div>
 
@@ -1018,8 +1075,16 @@ svg text {
       <div class="card-title">EV Flow Visualization</div>
       <div class="card-subtitle">Where does equity go when stacks collide?</div>
       <svg id="icm-flow-svg" width="100%" height="280" viewBox="0 0 480 280"></svg>
-      <div class="insight-box" style="margin-top:1rem;">
-        <strong>EV Leakage:</strong> When you bust an opponent, you gain their chips, but only
+      <div class="source-quote" style="margin-top:1rem;">
+        <div class="quote-text">"When two players clash, they leak $EV to the rest of the field. The more chips you win from your opponent, the more $EV you leak!"</div>
+        <div class="quote-source">— GTOWizard · The Limitations of Nash Equilibrium in ICM Spots</div>
+      </div>
+      <div class="source-quote">
+        <div class="quote-text">"In tournaments, the monetary value of your stack ($EV) can change despite your stack staying the same in terms of chips."</div>
+        <div class="quote-source">— GTOWizard · The Limitations of Nash Equilibrium in ICM Spots</div>
+      </div>
+      <div class="insight-box" style="margin-top:0.75rem;">
+        When you bust an opponent, you gain their chips, but only
         <span id="icm-pct-kept" style="color:var(--gold)">~62%</span> of their tournament equity
         transfers to you. The remaining <span id="icm-pct-leaked" style="color:var(--red-bright)">~38%</span>
         distributes to all other players who move up the pay ladder.
