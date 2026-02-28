@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Toy Games & ICM</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=JetBrains+Mono:wght@300;400;500&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060f1a;
+  --bg2: #0a1628;
+  --bg3: #0f1f38;
+  --bg4: #162a4a;
+  --gold: #d4af37;
+  --gold2: #f0d060;
+  --gold-dim: #8a7020;
+  --cream: #f5f0e8;
+  --cream-dim: #9a9080;
+  --green: #1a6b3a;
+  --green-bright: #2ecc71;
+  --green-mid: #27ae60;
+  --red: #c0392b;
+  --red-bright: #e74c3c;
+  --blue: #2980b9;
+  --blue-bright: #3498db;
+  --felt: #0d3520;
+  --border: rgba(212,175,55,0.25);
+  --shadow: 0 4px 32px rgba(0,0,0,0.6);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Crimson Text', serif;
+  font-size: 17px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Felt texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.005) 0px,
+      rgba(255,255,255,0.005) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════ HEADER ═══════════════════════════════════ */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(6,15,26,0.97);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  backdrop-filter: blur(12px);
+}
+
+.header-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-suit { font-size: 1.4rem; }
+
+nav { display: flex; gap: 0.25rem; }
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--cream-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover { color: var(--cream); background: rgba(255,255,255,0.05); }
+.nav-btn.active { color: var(--gold); background: rgba(212,175,55,0.1); }
+
+/* ═══════════════════════════════════ LAYOUT ═══════════════════════════════════ */
+main { max-width: 1300px; margin: 0 auto; padding: 2rem; position: relative; z-index: 1; }
+
+.section {
+  display: none;
+  animation: fadeIn 0.4s ease;
+}
+.section.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════ CARDS ═══════════════════════════════════ */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.card-subtitle {
+  color: var(--cream-dim);
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.5rem;
+}
+
+/* ═══════════════════════════════════ GRID LAYOUTS ═══════════════════════════════════ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+
+@media (max-width: 900px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════ SECTION HEADERS ═══════════════════════════════════ */
+.section-hero {
+  text-align: center;
+  padding: 3rem 0 2rem;
+}
+
+.section-hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+  line-height: 1.2;
+}
+
+.section-hero p {
+  color: var(--cream-dim);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--cream);
+  margin-bottom: 0.5rem;
+}
+
+h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  color: var(--gold);
+  margin-bottom: 0.75rem;
+}
+
+/* ═══════════════════════════════════ SLIDERS ═══════════════════════════════════ */
+.control-group { margin-bottom: 1.5rem; }
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.6rem;
+}
+
+.control-label span:first-child {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.control-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg4);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(212,175,55,0.5);
+  transition: all 0.15s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 16px rgba(212,175,55,0.8);
+}
+
+/* ═══════════════════════════════════ STAT BOXES ═══════════════════════════════════ */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+
+.stat-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+  margin-bottom: 0.4rem;
+}
+
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--gold);
+}
+
+.stat-formula {
+  font-size: 0.72rem;
+  color: var(--cream-dim);
+  margin-top: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════ SVG CHARTS ═══════════════════════════════════ */
+.chart-wrap {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chart-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--gold-dim);
+  margin-bottom: 0.75rem;
+}
+
+svg text {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════ RANGE BAR ═══════════════════════════════════ */
+.range-bar-wrap { margin-bottom: 1rem; }
+
+.range-bar {
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+.range-segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.range-legend {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════ INSIGHTS ═══════════════════════════════════ */
+.insight-box {
+  background: rgba(212,175,55,0.06);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: var(--cream-dim);
+}
+
+.insight-box strong { color: var(--gold); font-style: normal; }
+
+/* ═══════════════════════════════════ TABLE ═══════════════════════════════════ */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.compare-table th {
+  background: var(--bg3);
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+}
+
+.compare-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.yes { color: var(--green-bright); }
+.no { color: var(--red-bright); }
+
+/* ═══════════════════════════════════ POKER RANGE GRID ═══════════════════════════════════ */
+.range-grid-wrap {
+  overflow-x: auto;
+}
+
+.range-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 2px;
+  min-width: 520px;
+}
+
+.range-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  border-radius: 3px;
+  cursor: default;
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+}
+
+.range-cell:hover {
+  transform: scale(1.15);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.range-cell.header {
+  background: transparent;
+  color: var(--gold-dim);
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+.range-cell.always-call { background: #1a5c2a; color: #7effa0; }
+.range-cell.cash-only { background: #1a3a1a; color: #4a8a5a; }
+.range-cell.fold-both { background: #2a1a1a; color: #6a3a3a; }
+.range-cell.suited { background: rgba(255,255,255,0.03); }
+
+/* ═══════════════════════════════════ ICM FLOW ═══════════════════════════════════ */
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg3);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.flow-player {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+  min-width: 120px;
+}
+
+.flow-player-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+  margin-bottom: 0.25rem;
+}
+
+.flow-player-ev {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+
+.flow-arrow {
+  font-size: 1.5rem;
+  color: var(--gold-dim);
+}
+
+/* ═══════════════════════════════════ CHIP VISUAL ═══════════════════════════════════ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  border: 3px dashed;
+  position: relative;
+}
+
+/* ═══════════════════════════════════ PILL BADGES ═══════════════════════════════════ */
+.badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid;
+}
+
+.badge-gold { color: var(--gold); border-color: var(--gold); background: rgba(212,175,55,0.1); }
+.badge-green { color: var(--green-bright); border-color: var(--green-bright); background: rgba(46,204,113,0.1); }
+.badge-red { color: var(--red-bright); border-color: var(--red-bright); background: rgba(231,76,60,0.1); }
+
+/* ═══════════════════════════════════ MDF BAR COMPARISON ═══════════════════════════════════ */
+.mdf-bar-group { margin-bottom: 0.75rem; }
+.mdf-bar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--cream-dim);
+  margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mdf-bar-track {
+  height: 24px;
+  background: var(--bg4);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mdf-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═══════════════════════════════════ OVERVIEW DIAGRAM ═══════════════════════════════════ */
+.concept-flow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 2rem 0;
+}
+
+.concept-node {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.75rem;
+  text-align: center;
+  min-width: 160px;
+  position: relative;
+}
+
+.concept-node-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 0.3rem;
+}
+
+.concept-node-desc {
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+  max-width: 150px;
+}
+
+.concept-arrow {
+  font-size: 1.5rem;
+  color: var(--gold-dim);
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════ FORMULA DISPLAY ═══════════════════════════════════ */
+.formula {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--gold2);
+  display: inline-block;
+  margin: 0.25rem 0;
+}
+
+/* ═══════════════════════════════════ SCROLLBAR ═══════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+
+/* ═══════════════════════════════════ ANIMATIONS ═══════════════════════════════════ */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(212,175,55,0); }
+}
+
+.optimal-indicator {
+  animation: pulse-gold 2s infinite;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-suit">♠</span>
+      GTO Toy Games & ICM
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showSection('overview')">Overview</button>
+      <button class="nav-btn" onclick="showSection('polarized')">Polarized Game</button>
+      <button class="nav-btn" onclick="showSection('traps')">Trap Hands</button>
+      <button class="nav-btn" onclick="showSection('icm')">ICM & Nash</button>
+      <button class="nav-btn" onclick="showSection('synthesis')">Tournament Play</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════ OVERVIEW ═══════════════════════════════ -->
+<div id="overview" class="section active">
+  <div class="section-hero">
+    <div class="section-label">Foundations</div>
+    <h1>Toy Games & GTO</h1>
+    <p>Simplified poker models that let us solve strategy by hand — revealing the math behind solver outputs.</p>
+  </div>
+
+  <div class="card">
+    <h3>The Conceptual Hierarchy</h3>
+    <div class="concept-flow">
+      <div class="concept-node">
+        <div class="concept-node-title">Toy Games</div>
+        <div class="concept-node-desc">Simplified models solvable by hand</div>
+      </div>
+      <div class="concept-arrow">→</div>
+      <div class="concept-node">
+        <div class="concept-node-title">GTO Strategy</div>
+        <div class="concept-node-desc">Nash equilibrium in chip-EV games</div>
+      </div>
+      <div class="concept-arrow">→</div>
+      <div class="concept-node">
+        <div class="concept-node-title">ICM Adjustments</div>
+        <div class="concept-node-desc">Tournament non-zero-sum corrections</div>
+      </div>
+      <div class="concept-arrow">→</div>
+      <div class="concept-node">
+        <div class="concept-node-title">Tournament Play</div>
+        <div class="concept-node-desc">Tighter calls, fewer bluffs on bubble</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="section-label">Toy Game #1</div>
+      <h3>Polarized vs Bluffcatcher</h3>
+      <p style="color:var(--cream-dim);font-size:0.95rem;">The bettor holds only the nuts or complete air. The caller holds medium-strength hands that beat bluffs but lose to value. Three formulas govern equilibrium: <strong style="color:var(--gold)">MDF, bluff ratio, and EV extraction.</strong></p>
+      <div style="margin-top:1rem;">
+        <span class="formula">MDF = 1/(1+s)</span>
+        <br><span class="formula" style="margin-top:0.5rem;">Bluff% = s/(1+2s)</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Toy Game #2</div>
+      <h3>Traps in Defender's Range</h3>
+      <p style="color:var(--cream-dim);font-size:0.95rem;">When the caller has hands that <em>beat</em> value bets, optimal sizing shrinks. The bettor's "nut advantage" determines the right bet size — bigger traps mean smaller bets.</p>
+      <div style="margin-top:1rem;">
+        <span class="formula">s* = 1/√(2T) − 1</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Tournament Reality</div>
+      <h3>ICM Breaks Nash</h3>
+      <p style="color:var(--cream-dim);font-size:0.95rem;">In cash games, Nash guarantees minimum EV protection. In tournaments, chip equity ≠ dollar equity. Pots are <strong style="color:var(--gold)">non-zero-sum</strong>: uninvolved players gain EV when you win chips.</p>
+      <div style="margin-top:1rem;">
+        <span class="formula">Chip EV ≠ Dollar EV</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Three Pillars of Toy Game Analysis</h3>
+    <div class="grid-3" style="margin-top:1rem;">
+      <div style="background:var(--bg3);border-radius:8px;padding:1.25rem;">
+        <div class="section-label">Pillar 1</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold);margin-bottom:0.5rem;">Pot Odds</div>
+        <p style="font-size:0.85rem;color:var(--cream-dim);">Minimum equity required to call. Sets the bluffcatcher's decision threshold. Formula: <span style="color:var(--gold2);font-family:'JetBrains Mono',monospace">s/(1+2s)</span></p>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:1.25rem;">
+        <div class="section-label">Pillar 2</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold);margin-bottom:0.5rem;">MDF</div>
+        <p style="font-size:0.85rem;color:var(--cream-dim);">Minimum Defense Frequency — how often caller must defend to make bluffs unprofitable. Formula: <span style="color:var(--gold2);font-family:'JetBrains Mono',monospace">1/(1+s)</span></p>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:1.25rem;">
+        <div class="section-label">Pillar 3</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold);margin-bottom:0.5rem;">Expected Value</div>
+        <p style="font-size:0.85rem;color:var(--cream-dim);">EV framework drives all equilibrium solutions. At equilibrium, both players are indifferent between their available actions.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ POLARIZED GAME ═══════════════════════════════ -->
+<div id="polarized" class="section">
+  <div class="section-hero">
+    <div class="section-label">Toy Game 1</div>
+    <h1>Polarized vs Bluffcatcher</h1>
+    <p>The foundational river model. Bettor holds nuts or air. Caller holds bluffcatchers.</p>
+  </div>
+
+  <div class="grid-2">
+    <!-- Controls -->
+    <div class="card">
+      <div class="card-title">Controls</div>
+      <div class="card-subtitle">River · Pot = 1 unit</div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Bet Size (fraction of pot)</span>
+          <span class="control-value" id="p-s-display">0.50x</span>
+        </div>
+        <input type="range" id="p-s" min="5" max="200" value="50" oninput="updatePolarized()">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cream-dim);margin-top:0.3rem;">
+          <span>5%</span><span>Half Pot</span><span>Pot</span><span>2x Pot</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="stat-grid" id="p-stats">
+        <div class="stat-box">
+          <div class="stat-label">MDF</div>
+          <div class="stat-value" id="p-mdf">67%</div>
+          <div class="stat-formula">1 / (1+s)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Fold Freq</div>
+          <div class="stat-value" id="p-fold">33%</div>
+          <div class="stat-formula">s / (1+s)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Bluff %</div>
+          <div class="stat-value" id="p-bluff-pct">25%</div>
+          <div class="stat-formula">s / (1+2s)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Value EV</div>
+          <div class="stat-value" id="p-val-ev">1.33x</div>
+          <div class="stat-formula">(1+2s) / (1+s)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Bluff EV</div>
+          <div class="stat-value" style="color:var(--cream-dim)">0.00x</div>
+          <div class="stat-formula">always 0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Pot Odds</div>
+          <div class="stat-value" id="p-pot-odds">25%</div>
+          <div class="stat-formula">s / (1+2s)</div>
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <strong>Key Insight:</strong> At equilibrium, the bluffer is perfectly indifferent —
+        EV of bluffing equals EV of checking (zero). Larger bets require proportionally more
+        bluffs in range to keep the caller indifferent.
+      </div>
+    </div>
+
+    <!-- Range Composition -->
+    <div class="card">
+      <div class="card-title">Betting Range Composition</div>
+      <div class="card-subtitle">Bettor's optimal mix of value vs bluffs</div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Betting Range Split</div>
+        <div class="range-bar" id="p-range-bar">
+          <div class="range-segment" id="p-value-seg" style="background:linear-gradient(90deg,#1a5c2a,#27ae60);color:#7effa0;"></div>
+          <div class="range-segment" id="p-bluff-seg" style="background:linear-gradient(90deg,#6b1a1a,#c0392b);color:#ffaaaa;"></div>
+        </div>
+        <div class="range-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#27ae60"></div>Value Bets</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#c0392b"></div>Bluffs</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Caller's Defense Strategy</div>
+        <div class="range-bar" id="p-caller-bar">
+          <div class="range-segment" id="p-call-seg" style="background:linear-gradient(90deg,#1a3a6b,#2980b9);color:#aaddff;"></div>
+          <div class="range-segment" id="p-fold-seg" style="background:linear-gradient(90deg,#2a2a2a,#555);color:#999;"></div>
+        </div>
+        <div class="range-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div>Call (MDF)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#555"></div>Fold</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-title">Bluff Indifference — EV by Action</div>
+        <svg id="p-bluff-ev-chart" width="100%" height="80" viewBox="0 0 400 80"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- EV Curve -->
+  <div class="card">
+    <div class="card-title">Value EV Curve vs Bet Size</div>
+    <div class="card-subtitle">How much EV does the value hand extract at each bet size?</div>
+    <div class="chart-wrap">
+      <svg id="p-ev-curve" width="100%" height="280" viewBox="0 0 800 280"></svg>
+    </div>
+    <div class="insight-box">
+      <strong>Takeaway:</strong> Value EV increases monotonically with bet size in the pure polarized game.
+      This is why solvers often use large bets with polarized ranges on the river — larger bets extract
+      maximum value when opponents must call at a fixed minimum frequency.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ TRAP HANDS ═══════════════════════════════ -->
+<div id="traps" class="section">
+  <div class="section-hero">
+    <div class="section-label">Toy Game 2</div>
+    <h1>Trap Hands in Defender's Range</h1>
+    <p>When the caller holds some hands that beat value bets, optimal sizing shrinks. Nut advantage drives bet sizing.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Controls</div>
+      <div class="card-subtitle">River · Pot = 1 unit</div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Bet Size (fraction of pot)</span>
+          <span class="control-value" id="t-s-display">1.00x</span>
+        </div>
+        <input type="range" id="t-s" min="5" max="300" value="100" oninput="updateTraps()">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Trap Frequency (T)</span>
+          <span class="control-value" id="t-T-display">10%</span>
+        </div>
+        <input type="range" id="t-T" min="1" max="40" value="10" oninput="updateTraps()">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cream-dim);margin-top:0.3rem;">
+          <span>1%</span><span>10%</span><span>20%</span><span>40%</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="stat-grid">
+        <div class="stat-box optimal-indicator" style="border-color:var(--gold);">
+          <div class="stat-label">Optimal Bet s*</div>
+          <div class="stat-value" id="t-optimal">2.16x</div>
+          <div class="stat-formula">1/√(2T) − 1</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">BC Call Freq</div>
+          <div class="stat-value" id="t-bc-call">45%</div>
+          <div class="stat-formula">max(0, [1-T(1+s)] / [(1-T)(1+s)])</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Defense</div>
+          <div class="stat-value" id="t-defense">55%</div>
+          <div class="stat-formula">max(MDF, T)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Value EV</div>
+          <div class="stat-value" id="t-val-ev">1.10x</div>
+          <div class="stat-formula">varies by case</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap" style="margin-top:1rem;">
+        <div class="chart-title">Defense Breakdown</div>
+        <div style="margin-bottom:0.5rem;">
+          <div class="mdf-bar-group">
+            <div class="mdf-bar-label"><span style="color:var(--red-bright)">Traps (always call)</span><span id="t-trap-pct">10%</span></div>
+            <div class="mdf-bar-track"><div class="mdf-bar-fill" id="t-trap-bar" style="background:linear-gradient(90deg,#7b1a1a,#c0392b);color:#ffaaaa;"></div></div>
+          </div>
+          <div class="mdf-bar-group">
+            <div class="mdf-bar-label"><span style="color:var(--blue-bright)">Bluffcatchers (conditional)</span><span id="t-bc-pct">45%</span></div>
+            <div class="mdf-bar-track"><div class="mdf-bar-fill" id="t-bc-bar" style="background:linear-gradient(90deg,#1a3a6b,#2980b9);color:#aaddff;"></div></div>
+          </div>
+          <div class="mdf-bar-group">
+            <div class="mdf-bar-label"><span style="color:var(--cream-dim)">Folders</span><span id="t-fold-pct">45%</span></div>
+            <div class="mdf-bar-track"><div class="mdf-bar-fill" id="t-fold-bar" style="background:linear-gradient(90deg,#222,#555);color:#999;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Value EV Curve with Traps</div>
+      <div class="card-subtitle">Peak shifts left as trap frequency increases — bet smaller with more traps</div>
+      <div class="chart-wrap">
+        <svg id="t-ev-curve" width="100%" height="320" viewBox="0 0 600 320"></svg>
+      </div>
+      <div class="insight-box" id="t-insight">
+        <strong>Nut Advantage Principle:</strong> With <span id="t-insight-T">10%</span> traps,
+        optimal bet is <span id="t-insight-s">2.16x</span> pot. The bettor must balance value extraction
+        against getting stacked by traps. More traps = less nut advantage = smaller optimal bet.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ ICM & NASH ═══════════════════════════════ -->
+<div id="icm" class="section">
+  <div class="section-hero">
+    <div class="section-label">Tournament Theory</div>
+    <h1>ICM & Nash Limitations</h1>
+    <p>Why zero-sum Nash guarantees break down in tournament poker.</p>
+  </div>
+
+  <div class="card">
+    <h3>Zero-Sum vs Non-Zero-Sum</h3>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Heads-Up Cash (Zero-Sum)</th>
+          <th>Tournament (Non-Zero-Sum)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Opponent mistakes</td><td class="yes">✓ Always hurt them</td><td class="no">✗ May help other players</td></tr>
+        <tr><td>Extra action options</td><td class="yes">✓ Always increase your EV</td><td class="no">✗ Can reduce your EV</td></tr>
+        <tr><td>Unique EV guarantee</td><td class="yes">✓ Minimum EV guaranteed</td><td class="no">✗ Multiple equilibria exist</td></tr>
+        <tr><td>Chip EV = Money EV</td><td class="yes">✓ Yes, 1:1</td><td class="no">✗ No — ICM distorts value</td></tr>
+        <tr><td>EV leakage</td><td class="yes">✓ None</td><td class="no">✗ Leaks to uninvolved players</td></tr>
+      </tbody>
+    </table>
+    <div class="insight-box">
+      <strong>The Core Problem:</strong> When two players contest a pot in a tournament, the entire field
+      gains EV regardless of the outcome. Chips won are worth <em>less</em> than chips lost because
+      doubling your stack doesn't double your tournament equity.
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- EV Leakage Calculator -->
+    <div class="card">
+      <div class="card-title">EV Leakage Calculator</div>
+      <div class="card-subtitle">Bubble scenario — see how equity distributes when stacks clash</div>
+
+      <div class="control-group">
+        <div class="control-label"><span>Your Stack (BBs)</span><span class="control-value" id="icm-hero-display">50 BB</span></div>
+        <input type="range" id="icm-hero" min="20" max="100" value="50" oninput="updateICM()">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Opponent Stack (BBs)</span><span class="control-value" id="icm-villain-display">25 BB</span></div>
+        <input type="range" id="icm-villain" min="5" max="50" value="25" oninput="updateICM()">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Players Remaining</span><span class="control-value" id="icm-remaining-display">8</span></div>
+        <input type="range" id="icm-remaining" min="3" max="12" value="8" oninput="updateICM()">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>Players Paid</span><span class="control-value" id="icm-paid-display">3</span></div>
+        <input type="range" id="icm-paid" min="2" max="9" value="3" oninput="updateICM()">
+      </div>
+
+      <hr class="divider">
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-label">Your $EV Before</div>
+          <div class="stat-value" id="icm-hero-ev">12.5%</div>
+          <div class="stat-formula">of prize pool</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Opp $EV Before</div>
+          <div class="stat-value" id="icm-villain-ev">6.3%</div>
+          <div class="stat-formula">of prize pool</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">If You Win</div>
+          <div class="stat-value" id="icm-hero-win">18.6%</div>
+          <div class="stat-formula">your new $EV</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">EV Leaked</div>
+          <div class="stat-value" id="icm-leaked" style="color:var(--red-bright)">0.2%</div>
+          <div class="stat-formula">to field players</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EV Flow Diagram -->
+    <div class="card">
+      <div class="card-title">EV Flow Visualization</div>
+      <div class="card-subtitle">Where does equity go when stacks collide?</div>
+      <svg id="icm-flow-svg" width="100%" height="280" viewBox="0 0 480 280"></svg>
+      <div class="insight-box" style="margin-top:1rem;">
+        <strong>EV Leakage:</strong> When you bust an opponent, you gain their chips, but only
+        <span id="icm-pct-kept" style="color:var(--gold)">~62%</span> of their tournament equity
+        transfers to you. The remaining <span id="icm-pct-leaked" style="color:var(--red-bright)">~38%</span>
+        distributes to all other players who move up the pay ladder.
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Premium -->
+  <div class="card">
+    <div class="card-title">ICM Risk Premium — Calling Threshold</div>
+    <div class="card-subtitle">Tournament spots require more equity to call than chip-EV math suggests</div>
+    <div class="grid-2">
+      <div>
+        <div class="control-group">
+          <div class="control-label"><span>Bet Size vs Pot</span><span class="control-value" id="rp-bet-display">0.75x</span></div>
+          <input type="range" id="rp-bet" min="10" max="200" value="75" oninput="updateRiskPremium()">
+        </div>
+        <div class="control-group">
+          <div class="control-label"><span>ICM Pressure</span><span class="control-value" id="rp-pressure-display">Medium</span></div>
+          <input type="range" id="rp-pressure" min="0" max="100" value="50" oninput="updateRiskPremium()">
+          <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cream-dim);margin-top:0.3rem;">
+            <span>Cash Game</span><span>Final Table</span><span>Bubble</span>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-label">Chip-EV Threshold</div>
+            <div class="stat-value" id="rp-chip-ev">42.9%</div>
+            <div class="stat-formula">s / (1+2s)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">ICM Threshold</div>
+            <div class="stat-value" id="rp-icm-ev" style="color:var(--red-bright)">51.4%</div>
+            <div class="stat-formula">chip_EV × (1 + risk%)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Risk Premium</div>
+            <div class="stat-value" id="rp-premium" style="color:var(--red-bright)">+20%</div>
+            <div class="stat-formula">ICM adjustment</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Call Threshold vs Bet Size</div>
+        <svg id="rp-chart" width="100%" height="220" viewBox="0 0 400 220"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SYNTHESIS ═══════════════════════════════ -->
+<div id="synthesis" class="section">
+  <div class="section-hero">
+    <div class="section-label">Putting It Together</div>
+    <h1>Toy Games → Tournament Play</h1>
+    <p>How ICM pressure reshapes every GTO principle from the toy game models.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">ICM-Adjusted MDF</div>
+      <div class="card-subtitle">MDF shrinks under tournament pressure</div>
+
+      <div class="control-group">
+        <div class="control-label"><span>Bet Size (fraction of pot)</span><span class="control-value" id="syn-s-display">1.00x</span></div>
+        <input type="range" id="syn-s" min="10" max="200" value="100" oninput="updateSynthesis()">
+      </div>
+      <div class="control-group">
+        <div class="control-label"><span>ICM Pressure</span><span class="control-value" id="syn-icm-display">30%</span></div>
+        <input type="range" id="syn-icm" min="0" max="50" value="30" oninput="updateSynthesis()">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cream-dim);margin-top:0.3rem;">
+          <span>Cash (0%)</span><span>Deep Run</span><span>Final Table</span><span>Bubble (50%)</span>
+        </div>
+      </div>
+
+      <div class="chart-wrap" style="margin-top:1rem;">
+        <div class="chart-title">Defense Frequency Comparison</div>
+        <div class="mdf-bar-group" style="margin-bottom:1rem;">
+          <div class="mdf-bar-label">
+            <span><span class="badge badge-gold">GTO MDF</span></span>
+            <span id="syn-gto-mdf-pct" style="color:var(--gold);font-family:'JetBrains Mono',monospace;">50%</span>
+          </div>
+          <div class="mdf-bar-track">
+            <div class="mdf-bar-fill" id="syn-gto-bar" style="background:linear-gradient(90deg,#7a5a00,#d4af37);color:#fff8dc;"></div>
+          </div>
+        </div>
+        <div class="mdf-bar-group">
+          <div class="mdf-bar-label">
+            <span><span class="badge badge-red">ICM-Adjusted</span></span>
+            <span id="syn-icm-mdf-pct" style="color:var(--red-bright);font-family:'JetBrains Mono',monospace;">35%</span>
+          </div>
+          <div class="mdf-bar-track">
+            <div class="mdf-bar-fill" id="syn-icm-bar" style="background:linear-gradient(90deg,#6b1a1a,#c0392b);color:#ffaaaa;"></div>
+          </div>
+        </div>
+        <div style="margin-top:0.75rem;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--cream-dim);">
+          ICM reduction: <span id="syn-reduction" style="color:var(--red-bright);">−30%</span> relative to Nash
+        </div>
+      </div>
+
+      <div class="insight-box">
+        <strong>Why MDF Shrinks:</strong> Under ICM, your chips at risk are worth more than the chips
+        you'd win. Folding preserves equity relative to the field. This means opponents' bluffs become
+        more profitable — they can bluff more, but you should still call less.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bluff Frequency Adjustment</div>
+      <div class="card-subtitle">Leak-adjusted bluffing in ICM spots</div>
+
+      <svg id="syn-bluff-chart" width="100%" height="260" viewBox="0 0 400 260"></svg>
+
+      <div class="insight-box">
+        <strong>Counterintuitive:</strong> Even though ICM callers call less, you shouldn't bluff
+        proportionally more. When an opponent folds, they <em>don't lose as much</em> in ICM terms —
+        their fold is less costly. Optimal bluff frequency may still decrease on the bubble.
+      </div>
+    </div>
+  </div>
+
+  <!-- Range Grid -->
+  <div class="card">
+    <div class="card-title">Calling Range: Cash vs Tournament Bubble</div>
+    <div class="card-subtitle">Pot-sized bet on the river · Bubble with 30% ICM pressure</div>
+
+    <div class="range-grid-wrap">
+      <div class="range-grid" id="range-grid"></div>
+    </div>
+
+    <div style="margin-top:1rem;display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <div class="legend-item"><div class="legend-dot" style="background:#1a5c2a;width:14px;height:14px;border-radius:3px;"></div>Call in both cash & tournament</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a3a1a;width:14px;height:14px;border-radius:3px;"></div>Call in cash, fold on bubble</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2a1a1a;width:14px;height:14px;border-radius:3px;"></div>Fold in both</div>
+    </div>
+
+    <div class="insight-box" style="margin-top:1rem;">
+      <strong>Bubble Calling Range:</strong> On the bubble, we tighten vs a pot-sized bet from ~50% (GTO MDF) to ~35%.
+      This primarily drops the weakest bluffcatchers — 2nd and 3rd pair hands become folds.
+      Top pair and better hands remain calls in both contexts.
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="card">
+    <h3>Worked Example: Bubble with 25BB</h3>
+    <div class="grid-3">
+      <div style="background:var(--bg3);border-radius:8px;padding:1.25rem;">
+        <div class="section-label">Scenario</div>
+        <p style="font-size:0.9rem;color:var(--cream-dim);">You hold 25BB on the money bubble. Opponent bets pot (1x) on the river. GTO says call with 50% of your range.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:1.25rem;">
+        <div class="section-label">ICM Reality</div>
+        <p style="font-size:0.9rem;color:var(--cream-dim);">ICM pressure ≈ 30–40%. Adjusted calling threshold: <span style="color:var(--gold);font-family:'JetBrains Mono',monospace">~35%</span>. Drop marginal bluffcatchers (weak pairs, medium draws).</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:1.25rem;">
+        <div class="section-label">Practical Rule</div>
+        <p style="font-size:0.9rem;color:var(--cream-dim);">On bubble: tighten calling ranges by <span style="color:var(--gold);font-family:'JetBrains Mono',monospace">15–20%</span> relative to Nash. Keep value calls, fold marginal bluffcatchers.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  // Trigger updates for section-specific charts
+  if (id === 'polarized') updatePolarized();
+  if (id === 'traps') updateTraps();
+  if (id === 'icm') { updateICM(); updateRiskPremium(); }
+  if (id === 'synthesis') { updateSynthesis(); buildRangeGrid(); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════
+const pct = (v, decimals=0) => (v*100).toFixed(decimals) + '%';
+const fmt = (v, d=2) => v.toFixed(d) + 'x';
+const clamp = (v,mn,mx) => Math.max(mn, Math.min(mx, v));
+
+function makeSVGEl(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function svgLine(x1,y1,x2,y2,attrs={}) {
+  return makeSVGEl('line', {x1,y1,x2,y2,...attrs});
+}
+
+function svgText(x,y,text,attrs={}) {
+  const el = makeSVGEl('text', {x,y,...attrs});
+  el.textContent = text;
+  return el;
+}
+
+function svgPath(d, attrs={}) {
+  return makeSVGEl('path', {d,...attrs});
+}
+
+// ═══════════════════════════════════════════════════════
+//  POLARIZED GAME
+// ═══════════════════════════════════════════════════════
+function updatePolarized() {
+  const s = document.getElementById('p-s').value / 100;
+  document.getElementById('p-s-display').textContent = s.toFixed(2) + 'x';
+
+  const mdf = 1/(1+s);
+  const fold = s/(1+s);
+  const bluffPct = s/(1+2*s);
+  const valuePct = (1+s)/(1+2*s);
+  const valEV = (1+2*s)/(1+s);
+  const potOdds = s/(1+2*s);
+
+  document.getElementById('p-mdf').textContent = pct(mdf);
+  document.getElementById('p-fold').textContent = pct(fold);
+  document.getElementById('p-bluff-pct').textContent = pct(bluffPct);
+  document.getElementById('p-val-ev').textContent = fmt(valEV);
+  document.getElementById('p-pot-odds').textContent = pct(potOdds);
+
+  // Range bar
+  const vSeg = document.getElementById('p-value-seg');
+  const bSeg = document.getElementById('p-bluff-seg');
+  vSeg.style.width = pct(valuePct);
+  bSeg.style.width = pct(bluffPct);
+  vSeg.textContent = valuePct > 0.15 ? pct(valuePct) + ' Value' : '';
+  bSeg.textContent = bluffPct > 0.1 ? pct(bluffPct) + ' Bluff' : '';
+
+  // Caller bar
+  document.getElementById('p-call-seg').style.width = pct(mdf);
+  document.getElementById('p-fold-seg').style.width = pct(fold);
+  document.getElementById('p-call-seg').textContent = mdf > 0.1 ? pct(mdf) + ' Call' : '';
+  document.getElementById('p-fold-seg').textContent = fold > 0.1 ? pct(fold) + ' Fold' : '';
+
+  drawBluffEVBar(s, mdf);
+  drawPolarizedEVCurve(s);
+}
+
+function drawBluffEVBar(s, mdf) {
+  const svg = document.getElementById('p-bluff-ev-chart');
+  svg.innerHTML = '';
+  const W = 400, H = 80;
+  const fold = s/(1+s);
+  const winPot = fold * 1; // EV from folds (fraction of pot)
+  const loseBet = (1-fold) * s; // EV lost to calls
+  // Show two bars: gain from folds, cost of calls
+  const maxVal = Math.max(winPot, loseBet) + 0.05;
+  const scale = (W*0.35) / maxVal;
+
+  const midX = W/2;
+  const barH = 20;
+  const y1 = 20, y2 = 50;
+
+  // Gain bar (folds)
+  const gainW = winPot * scale;
+  const r1 = makeSVGEl('rect', {x: midX, y: y1, width: gainW, height: barH, fill:'#27ae60', rx:3});
+  svg.appendChild(r1);
+  const t1 = svgText(midX + gainW + 5, y1+14, `+${(winPot*100).toFixed(1)}%`, {fill:'#7effa0','font-size':'10','font-family':'JetBrains Mono,monospace'});
+  svg.appendChild(t1);
+  const l1 = svgText(midX - 5, y1+14, 'Fold gain', {fill:'#9a9080','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'});
+  svg.appendChild(l1);
+
+  // Loss bar (calls)
+  const lossW = loseBet * scale;
+  const r2 = makeSVGEl('rect', {x: midX - lossW, y: y2, width: lossW, height: barH, fill:'#c0392b', rx:3});
+  svg.appendChild(r2);
+  const t2 = svgText(midX - lossW - 5, y2+14, `-${(loseBet*100).toFixed(1)}%`, {fill:'#ffaaaa','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'});
+  svg.appendChild(t2);
+  const l2 = svgText(midX + 5, y2+14, 'Call loss', {fill:'#9a9080','font-size':'10','font-family':'JetBrains Mono,monospace'});
+  svg.appendChild(l2);
+
+  // Center line
+  svg.appendChild(svgLine(midX, 10, midX, 78, {stroke:'rgba(212,175,55,0.4)', 'stroke-width':1, 'stroke-dasharray':'3,3'}));
+  const eq = svgText(midX, 9, 'NET EV = 0 ✓', {fill:'#d4af37','font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'});
+  svg.appendChild(eq);
+}
+
+function drawPolarizedEVCurve(currentS) {
+  const svg = document.getElementById('p-ev-curve');
+  svg.innerHTML = '';
+  const W = 800, H = 280;
+  const pad = {l:60, r:30, t:20, b:50};
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+
+  const xMax = 2.0;
+  const yMin = 1.0, yMax = 1.85;
+
+  const xScale = v => pad.l + (v/xMax)*cW;
+  const yScale = v => pad.t + cH - ((v-yMin)/(yMax-yMin))*cH;
+
+  // Grid
+  [1.0,1.2,1.4,1.6,1.8].forEach(y => {
+    svg.appendChild(svgLine(pad.l, yScale(y), pad.l+cW, yScale(y), {stroke:'rgba(255,255,255,0.06)', 'stroke-width':1}));
+    svg.appendChild(svgText(pad.l-5, yScale(y)+4, y.toFixed(1)+'x', {fill:'#6a6060','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+  });
+  [0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0].forEach(x => {
+    svg.appendChild(svgLine(xScale(x), pad.t, xScale(x), pad.t+cH, {stroke:'rgba(255,255,255,0.06)', 'stroke-width':1}));
+    svg.appendChild(svgText(xScale(x), pad.t+cH+14, x+'x', {fill:'#6a6060','font-size':'10','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  });
+
+  // Axes labels
+  svg.appendChild(svgText(pad.l+cW/2, H-5, 'Bet Size (× pot)', {fill:'#9a9080','font-size':'11','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  const yLabel = svgText(12, pad.t+cH/2, 'Value EV (× pot)', {fill:'#9a9080','font-size':'11','text-anchor':'middle','font-family':'JetBrains Mono,monospace','transform':'rotate(-90,12,'+(pad.t+cH/2)+')'});
+  svg.appendChild(yLabel);
+
+  // EV curve
+  const steps = 200;
+  let d = '';
+  for (let i=0; i<=steps; i++) {
+    const s = (i/steps)*xMax;
+    if (s < 0.01) continue;
+    const ev = (1+2*s)/(1+s);
+    const x = xScale(s);
+    const y = yScale(Math.min(ev, yMax));
+    d += (i===1?'M':'L') + `${x},${y} `;
+  }
+  svg.appendChild(svgPath(d, {fill:'none', stroke:'#d4af37', 'stroke-width':'2.5'}));
+
+  // Area fill under curve
+  const firstS = 0.01;
+  const firstEV = (1+2*firstS)/(1+firstS);
+  let areaD = `M${xScale(firstS)},${yScale(yMin)} L${xScale(firstS)},${yScale(firstEV)} `;
+  for (let i=1; i<=steps; i++) {
+    const s = (i/steps)*xMax;
+    const ev = (1+2*s)/(1+s);
+    areaD += `L${xScale(s)},${yScale(Math.min(ev, yMax))} `;
+  }
+  areaD += `L${xScale(xMax)},${yScale(yMin)} Z`;
+  svg.appendChild(svgPath(areaD, {fill:'rgba(212,175,55,0.07)', stroke:'none'}));
+
+  // Current s marker
+  if (currentS > 0.01 && currentS <= xMax) {
+    const curEV = (1+2*currentS)/(1+currentS);
+    const cx = xScale(currentS);
+    const cy = yScale(Math.min(curEV, yMax));
+    svg.appendChild(svgLine(cx, pad.t, cx, pad.t+cH, {stroke:'rgba(212,175,55,0.5)', 'stroke-width':1, 'stroke-dasharray':'5,3'}));
+    const circ = makeSVGEl('circle', {cx, cy, r:6, fill:'#d4af37', stroke:'#060f1a', 'stroke-width':2});
+    svg.appendChild(circ);
+    const label = svgText(cx+8, cy-4, fmt(curEV), {fill:'#f0d060','font-size':'12','font-weight':'bold','font-family':'JetBrains Mono,monospace'});
+    svg.appendChild(label);
+  }
+
+  // Baseline at 1.0 (check EV)
+  svg.appendChild(svgLine(pad.l, yScale(1.0), pad.l+cW, yScale(1.0), {stroke:'rgba(41,128,185,0.4)', 'stroke-width':1, 'stroke-dasharray':'4,3'}));
+  svg.appendChild(svgText(pad.l+4, yScale(1.0)-4, 'Check EV = 1.0x', {fill:'rgba(41,128,185,0.6)','font-size':'9','font-family':'JetBrains Mono,monospace'}));
+}
+
+// ═══════════════════════════════════════════════════════
+//  TRAP HANDS
+// ═══════════════════════════════════════════════════════
+function updateTraps() {
+  const s = document.getElementById('t-s').value / 100;
+  const T = document.getElementById('t-T').value / 100;
+  document.getElementById('t-s-display').textContent = s.toFixed(2) + 'x';
+  document.getElementById('t-T-display').textContent = pct(T);
+
+  // Optimal bet size
+  const optS = T > 0 ? Math.max(0, 1/Math.sqrt(2*T) - 1) : Infinity;
+  document.getElementById('t-optimal').textContent = T > 0 ? optS.toFixed(2) + 'x' : '∞';
+
+  // Bluffcatcher calling frequency
+  const mdf = 1/(1+s);
+  let bcCall = 0;
+  if (T < mdf) {
+    bcCall = Math.max(0, (1 - T*(1+s)) / ((1-T)*(1+s)));
+  }
+  const totalDefense = T + (1-T)*bcCall;
+
+  document.getElementById('t-bc-call').textContent = pct(bcCall);
+  document.getElementById('t-defense').textContent = pct(totalDefense);
+
+  // Value EV
+  let valEV;
+  if (T < mdf) {
+    // Bluffcatchers call enough to make bluffs indifferent
+    valEV = s/(1+s) + 1 - T*(1+2*s);
+  } else {
+    // Bluffcatchers all fold
+    valEV = 1 - T*(1+s);
+  }
+  valEV = Math.max(0, valEV);
+  document.getElementById('t-val-ev').textContent = fmt(valEV);
+
+  // Defense bars
+  const foldFq = Math.max(0, 1 - totalDefense);
+  document.getElementById('t-trap-bar').style.width = pct(T);
+  document.getElementById('t-trap-bar').textContent = T > 0.04 ? pct(T) : '';
+  document.getElementById('t-bc-bar').style.width = pct((1-T)*bcCall);
+  document.getElementById('t-bc-bar').textContent = (1-T)*bcCall > 0.04 ? pct((1-T)*bcCall) : '';
+  document.getElementById('t-fold-bar').style.width = pct(foldFq);
+  document.getElementById('t-fold-bar').textContent = foldFq > 0.04 ? pct(foldFq) : '';
+
+  document.getElementById('t-trap-pct').textContent = pct(T);
+  document.getElementById('t-bc-pct').textContent = pct((1-T)*bcCall);
+  document.getElementById('t-fold-pct').textContent = pct(foldFq);
+
+  // Insight
+  document.getElementById('t-insight-T').textContent = pct(T);
+  document.getElementById('t-insight-s').textContent = T > 0 ? optS.toFixed(2) + 'x' : '∞';
+
+  drawTrapEVCurve(s, T, optS);
+}
+
+function computeTrapEV(s, T) {
+  if (s < 0.001) return 1 - T;
+  const mdf = 1/(1+s);
+  if (T < mdf) {
+    return Math.max(0, s/(1+s) + 1 - T*(1+2*s));
+  } else {
+    return Math.max(0, 1 - T*(1+s));
+  }
+}
+
+function drawTrapEVCurve(currentS, T, optS) {
+  const svg = document.getElementById('t-ev-curve');
+  svg.innerHTML = '';
+  const W = 600, H = 320;
+  const pad = {l:55, r:30, t:20, b:50};
+  const cW = W - pad.l - pad.r;
+  const cH = H - pad.t - pad.b;
+
+  const xMax = 3.0;
+  const yMin = 0, yMax = 1.5;
+
+  const xScale = v => pad.l + (v/xMax)*cW;
+  const yScale = v => pad.t + cH - ((v-yMin)/(yMax-yMin))*cH;
+
+  // Grid
+  [0,0.25,0.5,0.75,1.0,1.25].forEach(y => {
+    svg.appendChild(svgLine(pad.l, yScale(y), pad.l+cW, yScale(y), {stroke:'rgba(255,255,255,0.06)', 'stroke-width':1}));
+    svg.appendChild(svgText(pad.l-5, yScale(y)+4, y.toFixed(2), {fill:'#6a6060','font-size':'9','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+  });
+
+  // Draw curves for multiple T values to show shifting
+  const tValues = [0.02, 0.05, T, 0.25, 0.35];
+  const tColors = ['rgba(46,204,113,0.25)','rgba(52,152,219,0.25)','#d4af37','rgba(231,76,60,0.25)','rgba(155,89,182,0.15)'];
+
+  tValues.forEach((tv, idx) => {
+    if (Math.abs(tv - T) < 0.001) return; // draw active last
+    const steps = 300;
+    let d = '';
+    for (let i=1; i<=steps; i++) {
+      const sv = (i/steps)*xMax;
+      const ev = computeTrapEV(sv, tv);
+      const x = xScale(sv);
+      const y = yScale(Math.min(ev, yMax));
+      d += (i===1?'M':'L') + `${x},${y} `;
+    }
+    svg.appendChild(svgPath(d, {fill:'none', stroke:tColors[idx], 'stroke-width':'1.5'}));
+  });
+
+  // Active T curve
+  {
+    const steps = 300;
+    let d = '';
+    for (let i=1; i<=steps; i++) {
+      const sv = (i/steps)*xMax;
+      const ev = computeTrapEV(sv, T);
+      const x = xScale(sv);
+      const y = yScale(Math.min(ev, yMax));
+      d += (i===1?'M':'L') + `${x},${y} `;
+    }
+    svg.appendChild(svgPath(d, {fill:'none', stroke:'#d4af37', 'stroke-width':'2.5'}));
+  }
+
+  // Current s marker
+  {
+    const ev = computeTrapEV(currentS, T);
+    const cx = xScale(currentS);
+    const cy = yScale(Math.min(ev, yMax));
+    svg.appendChild(svgLine(cx, pad.t, cx, pad.t+cH, {stroke:'rgba(212,175,55,0.4)', 'stroke-width':1, 'stroke-dasharray':'4,3'}));
+    const circ = makeSVGEl('circle', {cx, cy, r:5, fill:'#fff', stroke:'#d4af37', 'stroke-width':2});
+    svg.appendChild(circ);
+  }
+
+  // Optimal s* star marker
+  if (T > 0 && optS < xMax) {
+    const optEV = computeTrapEV(optS, T);
+    const ox = xScale(optS);
+    const oy = yScale(Math.min(optEV, yMax));
+    // Draw star
+    svg.appendChild(svgLine(ox, pad.t, ox, pad.t+cH, {stroke:'rgba(46,204,113,0.5)', 'stroke-width':1, 'stroke-dasharray':'4,3'}));
+    const star = svgText(ox, oy-2, '★', {fill:'#2ecc71','font-size':'16','text-anchor':'middle','font-family':'serif'});
+    svg.appendChild(star);
+    svg.appendChild(svgText(ox, oy-16, 's*=' + optS.toFixed(2), {fill:'#2ecc71','font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  }
+
+  // Axes
+  svg.appendChild(svgLine(pad.l, pad.t, pad.l, pad.t+cH, {stroke:'rgba(255,255,255,0.15)', 'stroke-width':1}));
+  svg.appendChild(svgLine(pad.l, pad.t+cH, pad.l+cW, pad.t+cH, {stroke:'rgba(255,255,255,0.15)', 'stroke-width':1}));
+  svg.appendChild(svgText(pad.l+cW/2, H-5, 'Bet Size (× pot)', {fill:'#9a9080','font-size':'11','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+
+  // T label
+  svg.appendChild(svgText(pad.l+cW-5, pad.t+12, `T=${pct(T)} (active)`, {fill:'#d4af37','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText(pad.l+cW-5, pad.t+24, '★ = optimal bet', {fill:'#2ecc71','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+
+  [0,1,2,3].forEach(x => {
+    svg.appendChild(svgText(xScale(x), pad.t+cH+14, x+'x', {fill:'#6a6060','font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ICM — Malmuth-Harville model with bitmask DP
+// ═══════════════════════════════════════════════════════
+
+// Computes ICM equity for each player using the Malmuth-Harville formula.
+// stacks: array of chip counts. prizes: array of prize fractions (sum=1, descending).
+// Returns array of $EV fractions for each player.
+function computeICM(stacks, prizes) {
+  const N = stacks.length;
+  const M = Math.min(prizes.length, N);
+  if (N === 0) return [];
+
+  // Precompute chip sums for every subset (bitmask)
+  const maskSum = new Float64Array(1 << N);
+  for (let mask = 1; mask < (1 << N); mask++) {
+    const lsb = mask & (-mask);          // lowest set bit
+    const bit = Math.log2(lsb) | 0;
+    maskSum[mask] = maskSum[mask ^ lsb] + stacks[bit];
+  }
+
+  // Memoized recursive EV computation.
+  // rec(mask, prizeIdx) returns a Float64Array of length N:
+  //   result[i] = EV contribution to player i from prizes[prizeIdx..M-1]
+  //               given that exactly the players in `mask` are still active.
+  const memo = new Map();
+
+  function rec(mask, prizeIdx) {
+    if (prizeIdx >= M) return new Float64Array(N);
+    const key = mask * M + prizeIdx;
+    if (memo.has(key)) return memo.get(key);
+
+    const result = new Float64Array(N);
+    const sum = maskSum[mask];
+
+    // If only one player left, they sweep all remaining prizes
+    if ((mask & (mask - 1)) === 0) {
+      const solo = Math.log2(mask) | 0;
+      for (let p = prizeIdx; p < M; p++) result[solo] += prizes[p];
+      memo.set(key, result);
+      return result;
+    }
+
+    for (let i = 0; i < N; i++) {
+      if (!(mask & (1 << i))) continue;
+      const prob = stacks[i] / sum;
+      result[i] += prob * prizes[prizeIdx];
+      const sub = rec(mask ^ (1 << i), prizeIdx + 1);
+      for (let j = 0; j < N; j++) result[j] += prob * sub[j];
+    }
+
+    memo.set(key, result);
+    return result;
+  }
+
+  return Array.from(rec((1 << N) - 1, 0));
+}
+
+// Builds a descending prize array normalized to sum=1.
+// e.g. paid=3 → [3/6, 2/6, 1/6] = [0.5, 0.333, 0.167]
+function makePrizes(paid) {
+  const raw = Array.from({length: paid}, (_, k) => paid - k);
+  const total = raw.reduce((a, b) => a + b, 0);
+  return raw.map(p => p / total);
+}
+
+function updateICM() {
+  const heroSlider   = parseInt(document.getElementById('icm-hero').value);
+  const villSlider   = parseInt(document.getElementById('icm-villain').value);
+  // Slider is capped at 12 — bitmask DP uses 2^12 = 4096 states, runs instantly
+  const remaining    = parseInt(document.getElementById('icm-remaining').value);
+  const paid         = Math.min(parseInt(document.getElementById('icm-paid').value), remaining - 1);
+
+  document.getElementById('icm-hero-display').textContent    = heroSlider + ' BB';
+  document.getElementById('icm-villain-display').textContent = villSlider + ' BB';
+  document.getElementById('icm-remaining-display').textContent = remaining;
+  document.getElementById('icm-paid-display').textContent    = paid;
+
+  // Normalize: average player = 100 chips. Hero/villain scaled relative to 50BB average.
+  const AVG = 100;
+  const heroChips = (heroSlider / 50) * AVG;
+  const villChips = (villSlider / 50) * AVG;
+  const fieldCount = Math.max(0, remaining - 2);
+  const totalChips = remaining * AVG;
+  const fieldEach  = fieldCount > 0
+    ? Math.max(1, (totalChips - heroChips - villChips) / fieldCount)
+    : 0;
+
+  // Build stack arrays
+  const stacksBefore = [heroChips, villChips, ...Array(fieldCount).fill(fieldEach)];
+  // After bust: hero absorbs villain's chips; one fewer player
+  const stacksAfter  = [heroChips + villChips, ...Array(fieldCount).fill(fieldEach)];
+
+  const prizes = makePrizes(paid);
+
+  // MH-ICM computation
+  const evBefore = computeICM(stacksBefore, prizes);
+  const evAfter  = computeICM(stacksAfter,  prizes);
+
+  const heroEvBefore   = evBefore[0];
+  const villEvBefore   = evBefore[1];
+  const heroEvAfter    = evAfter[0];
+
+  // Villain busted below the money → gets $0
+  const heroGain   = heroEvAfter - heroEvBefore;
+  const villLoss   = Math.max(1e-6, villEvBefore);  // villain had this equity; now has 0
+  const leakage    = Math.max(0, villLoss - heroGain);
+  const keptPct    = Math.min(1, Math.max(0, heroGain / villLoss));
+  const leakedPct  = 1 - keptPct;
+
+  document.getElementById('icm-hero-ev').textContent  = pct(heroEvBefore, 1);
+  document.getElementById('icm-villain-ev').textContent = pct(villEvBefore, 1);
+  document.getElementById('icm-hero-win').textContent  = pct(heroEvAfter, 1);
+  document.getElementById('icm-leaked').textContent    = pct(leakage, 1);
+  document.getElementById('icm-pct-kept').textContent  = pct(keptPct, 0);
+  document.getElementById('icm-pct-leaked').textContent = pct(leakedPct, 0);
+
+  drawICMFlow(heroEvBefore, villEvBefore, heroEvAfter, leakage, keptPct);
+}
+
+function drawICMFlow(heroEV, villainEV, heroWin, leaked, keptPct) {
+  const svg = document.getElementById('icm-flow-svg');
+  svg.innerHTML = '';
+  const W = 480, H = 280;
+
+  // Background glow
+  const grad = makeSVGEl('radialGradient', {id:'bgGlow', cx:'50%', cy:'50%', r:'50%'});
+  const stop1 = makeSVGEl('stop', {offset:'0%', 'stop-color':'rgba(212,175,55,0.05)'});
+  const stop2 = makeSVGEl('stop', {offset:'100%', 'stop-color':'rgba(0,0,0,0)'});
+  grad.appendChild(stop1); grad.appendChild(stop2);
+  const defs = makeSVGEl('defs', {});
+  defs.appendChild(grad);
+  svg.appendChild(defs);
+
+  // Player nodes
+  function drawNode(x, y, label, ev, color) {
+    const g = makeSVGEl('g', {});
+    const circ = makeSVGEl('circle', {cx:x, cy:y, r:38, fill:color, stroke:'rgba(212,175,55,0.3)', 'stroke-width':1.5});
+    g.appendChild(circ);
+    g.appendChild(svgText(x, y-6, label, {fill:'#f5f0e8','font-size':'11','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+    g.appendChild(svgText(x, y+10, pct(ev,1), {fill:'#d4af37','font-size':'14','text-anchor':'middle','font-weight':'bold','font-family':'JetBrains Mono,monospace'}));
+    g.appendChild(svgText(x, y+22, 'of prize', {fill:'rgba(245,240,232,0.4)','font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+    svg.appendChild(g);
+  }
+
+  const heroX = 100, heroY = 140;
+  const villX = 380, villY = 90;
+  const fieldX = 380, fieldY = 210;
+
+  drawNode(heroX, heroY, 'YOU', heroEV, '#0d3520');
+  drawNode(villX, villY, 'OPP', villainEV, '#3a0a0a');
+  drawNode(fieldX, fieldY, 'FIELD', leaked > 0 ? leaked : 0.001, '#0a1628');
+
+  // Arrow: opp → hero (chips gained)
+  const gainLabel = `+${pct(heroWin - heroEV, 1)}`;
+  svg.appendChild(svgLine(villX-38, villY+10, heroX+38, heroY-10, {stroke:'#27ae60', 'stroke-width':2, 'marker-end':'url(#arrowGreen)'}));
+  svg.appendChild(svgText((heroX+villX)/2+10, (heroY+villY)/2-8, gainLabel, {fill:'#27ae60','font-size':'11','font-weight':'bold','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText((heroX+villX)/2+10, (heroY+villY)/2+4, pct(keptPct,0)+' captured', {fill:'rgba(46,204,113,0.6)','font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+
+  // Arrow: opp → field (leaked)
+  svg.appendChild(svgLine(villX, villY+38, fieldX, fieldY-38, {stroke:'#e74c3c', 'stroke-width':2}));
+  svg.appendChild(svgText(villX+35, (villY+fieldY)/2, `+${pct(leaked,1)}`, {fill:'#e74c3c','font-size':'11','font-weight':'bold','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText(villX+35, (villY+fieldY)/2+12, 'LEAKED', {fill:'rgba(231,76,60,0.6)','font-size':'9','font-family':'JetBrains Mono,monospace'}));
+
+  // Arrow markers
+  const arrowDefs = makeSVGEl('defs', {});
+  const marker = makeSVGEl('marker', {id:'arrowGreen', markerWidth:'10', markerHeight:'7', refX:'9', refY:'3.5', orient:'auto'});
+  const polygon = makeSVGEl('polygon', {points:'0 0, 10 3.5, 0 7', fill:'#27ae60'});
+  marker.appendChild(polygon);
+  arrowDefs.appendChild(marker);
+  svg.insertBefore(arrowDefs, svg.firstChild);
+
+  // Labels
+  svg.appendChild(svgText(W/2, 20, 'When stacks clash on the bubble:', {fill:'rgba(245,240,232,0.5)','font-size':'11','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText(W/2, H-8, `Hero captures ${pct(keptPct,0)} · Field gets ${pct(1-keptPct,0)}`, {fill:'rgba(245,240,232,0.4)','font-size':'10','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+}
+
+function updateRiskPremium() {
+  const betRatio = document.getElementById('rp-bet').value / 100;
+  const pressure = document.getElementById('rp-pressure').value / 100;
+  document.getElementById('rp-bet-display').textContent = betRatio.toFixed(2) + 'x';
+
+  const levels = ['None', 'Low', 'Medium', 'High', 'Extreme'];
+  document.getElementById('rp-pressure-display').textContent = levels[Math.floor(pressure * 4.99)];
+
+  const chipEV = betRatio / (1 + 2*betRatio);
+  const riskPrem = pressure * 0.3; // 0% to 30% premium
+  const icmEV = Math.min(0.99, chipEV * (1 + riskPrem));
+
+  document.getElementById('rp-chip-ev').textContent = pct(chipEV, 1);
+  document.getElementById('rp-icm-ev').textContent = pct(icmEV, 1);
+  document.getElementById('rp-premium').textContent = '+' + pct(riskPrem, 0);
+
+  drawRiskPremiumChart(betRatio, pressure);
+}
+
+function drawRiskPremiumChart(currentBet, pressure) {
+  const svg = document.getElementById('rp-chart');
+  svg.innerHTML = '';
+  const W = 400, H = 220;
+  const pad = {l:45, r:15, t:15, b:40};
+  const cW = W-pad.l-pad.r, cH = H-pad.t-pad.b;
+
+  const xMax = 2.0;
+  const xScale = v => pad.l + (v/xMax)*cW;
+  const yScale = v => pad.t + cH - v*cH;
+
+  // Grid
+  [0,0.25,0.5,0.75,1.0].forEach(y => {
+    svg.appendChild(svgLine(pad.l, yScale(y), pad.l+cW, yScale(y), {stroke:'rgba(255,255,255,0.05)', 'stroke-width':1}));
+    svg.appendChild(svgText(pad.l-5, yScale(y)+4, pct(y,0), {fill:'#6a6060','font-size':'9','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+  });
+
+  // Chip EV curve
+  {
+    let d = '';
+    for (let i=1; i<=200; i++) {
+      const s = (i/200)*xMax;
+      const ev = s/(1+2*s);
+      d += (i===1?'M':'L') + `${xScale(s)},${yScale(ev)} `;
+    }
+    svg.appendChild(svgPath(d, {fill:'none', stroke:'#d4af37', 'stroke-width':'2'}));
+  }
+
+  // ICM EV curve
+  {
+    const riskPrem = pressure * 0.3;
+    let d = '';
+    for (let i=1; i<=200; i++) {
+      const s = (i/200)*xMax;
+      const ev = Math.min(0.99, (s/(1+2*s)) * (1+riskPrem));
+      d += (i===1?'M':'L') + `${xScale(s)},${yScale(ev)} `;
+    }
+    svg.appendChild(svgPath(d, {fill:'none', stroke:'#e74c3c', 'stroke-width':'2', 'stroke-dasharray':'5,3'}));
+  }
+
+  // Current bet marker
+  {
+    const chipEV = currentBet/(1+2*currentBet);
+    const icmEV = Math.min(0.99, chipEV * (1+pressure*0.3));
+    svg.appendChild(svgLine(xScale(currentBet), pad.t, xScale(currentBet), pad.t+cH, {stroke:'rgba(255,255,255,0.2)', 'stroke-width':1, 'stroke-dasharray':'3,3'}));
+    svg.appendChild(makeSVGEl('circle', {cx:xScale(currentBet), cy:yScale(chipEV), r:4, fill:'#d4af37'}));
+    svg.appendChild(makeSVGEl('circle', {cx:xScale(currentBet), cy:yScale(icmEV), r:4, fill:'#e74c3c'}));
+  }
+
+  // Legend
+  svg.appendChild(svgLine(pad.l+5, pad.t+10, pad.l+25, pad.t+10, {stroke:'#d4af37','stroke-width':2}));
+  svg.appendChild(svgText(pad.l+28, pad.t+14, 'Chip-EV threshold', {fill:'#d4af37','font-size':'9','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgLine(pad.l+5, pad.t+22, pad.l+25, pad.t+22, {stroke:'#e74c3c','stroke-width':2,'stroke-dasharray':'5,3'}));
+  svg.appendChild(svgText(pad.l+28, pad.t+26, 'ICM threshold', {fill:'#e74c3c','font-size':'9','font-family':'JetBrains Mono,monospace'}));
+
+  svg.appendChild(svgText(pad.l+cW/2, H-5, 'Bet Size (× pot)', {fill:'#9a9080','font-size':'10','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+}
+
+// ═══════════════════════════════════════════════════════
+//  SYNTHESIS
+// ═══════════════════════════════════════════════════════
+function updateSynthesis() {
+  const s = document.getElementById('syn-s').value / 100;
+  const icmPressure = document.getElementById('syn-icm').value / 100;
+  document.getElementById('syn-s-display').textContent = s.toFixed(2) + 'x';
+  document.getElementById('syn-icm-display').textContent = pct(icmPressure);
+
+  const gtoMDF = 1/(1+s);
+  const icmMDF = gtoMDF * (1 - icmPressure * 0.6); // ICM reduces MDF by up to 60% at max pressure
+  const reduction = (gtoMDF - icmMDF) / gtoMDF;
+
+  document.getElementById('syn-gto-mdf-pct').textContent = pct(gtoMDF, 1);
+  document.getElementById('syn-icm-mdf-pct').textContent = pct(icmMDF, 1);
+  document.getElementById('syn-reduction').textContent = '-' + pct(reduction, 0) + ' relative';
+
+  document.getElementById('syn-gto-bar').style.width = pct(gtoMDF);
+  document.getElementById('syn-gto-bar').textContent = pct(gtoMDF, 0);
+  document.getElementById('syn-icm-bar').style.width = pct(icmMDF);
+  document.getElementById('syn-icm-bar').textContent = pct(icmMDF, 0);
+
+  drawSynthBluffChart(s, icmPressure);
+}
+
+function drawSynthBluffChart(betS, icmPressure) {
+  const svg = document.getElementById('syn-bluff-chart');
+  svg.innerHTML = '';
+  const W = 400, H = 260;
+  const pad = {l:50, r:20, t:30, b:50};
+  const cW = W-pad.l-pad.r, cH = H-pad.t-pad.b;
+
+  const xMax = 2.0;
+  const xScale = v => pad.l + (v/xMax)*cW;
+  const yScale = v => pad.t + cH - v*cH;
+
+  [0,0.1,0.2,0.3,0.4,0.5].forEach(y => {
+    svg.appendChild(svgLine(pad.l, yScale(y), pad.l+cW, yScale(y), {stroke:'rgba(255,255,255,0.05)', 'stroke-width':1}));
+    svg.appendChild(svgText(pad.l-5, yScale(y)+4, pct(y,0), {fill:'#6a6060','font-size':'9','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+  });
+
+  // GTO bluff freq curve (s/(1+2s))
+  {
+    let d = '';
+    for (let i=1; i<=200; i++) {
+      const s = (i/200)*xMax;
+      const bluff = s/(1+2*s);
+      d += (i===1?'M':'L') + `${xScale(s)},${yScale(bluff)} `;
+    }
+    svg.appendChild(svgPath(d, {fill:'none', stroke:'#d4af37', 'stroke-width':'2.5'}));
+  }
+
+  // ICM-adjusted bluff freq (bluffs decrease because callers call less → opponent's folds are cheaper)
+  {
+    let d = '';
+    for (let i=1; i<=200; i++) {
+      const s = (i/200)*xMax;
+      const gtoBluff = s/(1+2*s);
+      // In ICM, even though MDF decreases, optimal bluff ratio may also decrease
+      // because fold equity is reduced (folds don't "cost" opponents as much)
+      const icmBluff = gtoBluff * (1 - icmPressure * 0.35);
+      d += (i===1?'M':'L') + `${xScale(s)},${yScale(icmBluff)} `;
+    }
+    svg.appendChild(svgPath(d, {fill:'none', stroke:'#e74c3c', 'stroke-width':'2.5', 'stroke-dasharray':'6,3'}));
+  }
+
+  // Current bet line
+  const gtoB = betS/(1+2*betS);
+  const icmB = gtoB * (1 - icmPressure * 0.35);
+  svg.appendChild(svgLine(xScale(betS), pad.t, xScale(betS), pad.t+cH, {stroke:'rgba(255,255,255,0.15)', 'stroke-width':1, 'stroke-dasharray':'3,3'}));
+  svg.appendChild(makeSVGEl('circle', {cx:xScale(betS), cy:yScale(gtoB), r:5, fill:'#d4af37'}));
+  svg.appendChild(makeSVGEl('circle', {cx:xScale(betS), cy:yScale(icmB), r:5, fill:'#e74c3c'}));
+
+  // Labels
+  svg.appendChild(svgText(pad.l+cW/2, pad.t-10, 'Optimal Bluff Frequency vs Bet Size', {fill:'#9a9080','font-size':'10','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgLine(pad.l+5, pad.t+8, pad.l+20, pad.t+8, {stroke:'#d4af37','stroke-width':2}));
+  svg.appendChild(svgText(pad.l+23, pad.t+12, 'GTO', {fill:'#d4af37','font-size':'9','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgLine(pad.l+50, pad.t+8, pad.l+65, pad.t+8, {stroke:'#e74c3c','stroke-width':2,'stroke-dasharray':'4,2'}));
+  svg.appendChild(svgText(pad.l+68, pad.t+12, 'ICM-adj', {fill:'#e74c3c','font-size':'9','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText(pad.l+cW/2, H-5, 'Bet Size (× pot)', {fill:'#9a9080','font-size':'10','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+}
+
+// ═══════════════════════════════════════════════════════
+//  RANGE GRID
+// ═══════════════════════════════════════════════════════
+function buildRangeGrid() {
+  const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+  const grid = document.getElementById('range-grid');
+  grid.innerHTML = '';
+
+  // Header row
+  grid.appendChild(makeRangeCell('', 'header'));
+  ranks.forEach(r => grid.appendChild(makeRangeCell(r, 'header')));
+
+  // Rank strength (0=worst, 12=best)
+  // Combined hand strength for 13x13 matrix
+  // Top-right = suited, bottom-left = offsuit
+  // We'll assign tier based on pair rank + combo type
+  ranks.forEach((r1, i) => {
+    grid.appendChild(makeRangeCell(r1, 'header'));
+    ranks.forEach((r2, j) => {
+      let tier, label;
+      if (i === j) {
+        // Pair
+        label = r1+r2;
+        tier = i <= 4 ? 'always-call' : i <= 7 ? 'cash-only' : 'fold-both';
+      } else if (j < i) {
+        // Suited (above diagonal) - j < i means... wait
+        // In standard format: row is first rank, col is second rank
+        // Above diagonal (j < i) = suited
+        label = r1+r2+'s';
+        const hi = Math.min(i,j), lo = Math.max(i,j);
+        const gap = lo - hi;
+        if (hi === 0 && gap <= 4) tier = 'always-call';
+        else if (hi <= 2 && gap <= 3) tier = 'always-call';
+        else if (hi <= 4 && gap <= 2) tier = 'cash-only';
+        else if (hi <= 6 && gap <= 1) tier = 'cash-only';
+        else tier = 'fold-both';
+      } else {
+        // Offsuit (below diagonal)
+        label = r1+r2+'o';
+        const hi = Math.min(i,j), lo = Math.max(i,j);
+        const gap = lo - hi;
+        if (hi === 0 && gap <= 3) tier = 'always-call';
+        else if (hi <= 1 && gap <= 2) tier = 'always-call';
+        else if (hi <= 3 && gap <= 2) tier = 'cash-only';
+        else if (hi <= 5 && gap <= 1) tier = 'cash-only';
+        else tier = 'fold-both';
+      }
+      grid.appendChild(makeRangeCell(label, tier));
+    });
+  });
+}
+
+function makeRangeCell(text, cls) {
+  const div = document.createElement('div');
+  div.className = 'range-cell ' + cls;
+  div.textContent = text;
+  if (cls !== 'header') {
+    div.title = text + ': ' + {
+      'always-call': 'Call in both cash game and tournament',
+      'cash-only': 'Call in cash game, fold on bubble (ICM pressure)',
+      'fold-both': 'Fold in both'
+    }[cls];
+  }
+  return div;
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+updatePolarized();
+</script>
+</body>
+</html>
