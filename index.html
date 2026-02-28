@@ -998,17 +998,52 @@ svg text {
     <table class="compare-table">
       <thead>
         <tr>
-          <th>Property</th>
-          <th>Heads-Up Cash (Zero-Sum)</th>
-          <th>Tournament (Non-Zero-Sum)</th>
+          <th style="width:32%">GTO Guarantee</th>
+          <th style="width:34%">✓ Heads-Up Cash — Zero-Sum</th>
+          <th style="width:34%">✗ Tournament — Non-Zero-Sum</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td>Opponent mistakes</td><td class="yes">✓ Always hurt them</td><td class="no">✗ May help other players</td></tr>
-        <tr><td>Extra action options</td><td class="yes">✓ Always increase your EV</td><td class="no">✗ Can reduce your EV</td></tr>
-        <tr><td>Unique EV guarantee</td><td class="yes">✓ Minimum EV guaranteed</td><td class="no">✗ Multiple equilibria exist</td></tr>
-        <tr><td>Chip EV = Money EV</td><td class="yes">✓ Yes, 1:1</td><td class="no">✗ No — ICM distorts value</td></tr>
-        <tr><td>EV leakage</td><td class="yes">✓ None</td><td class="no">✗ Leaks to uninvolved players</td></tr>
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--cream);margin-bottom:0.2rem;">Opponent mistakes</div>
+            <div style="font-size:0.8rem;color:var(--cream-dim);">Who benefits when your opponent plays badly?</div>
+          </td>
+          <td class="yes">Their loss is your gain — all misdirected EV flows directly to you.</td>
+          <td class="no">Their loss leaks across the table. Other players gain EV without being in the hand.</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--cream);margin-bottom:0.2rem;">Adding bet sizes</div>
+            <div style="font-size:0.8rem;color:var(--cream-dim);">Does having more options always help you?</div>
+          </td>
+          <td class="yes">More options can only help. A new bet size either gets used (improving EV) or gets ignored.</td>
+          <td class="no">A new bet size can open equilibria that are worse for you — the field captures the upside.</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--cream);margin-bottom:0.2rem;">Playing GTO protects you</div>
+            <div style="font-size:0.8rem;color:var(--cream-dim);">Does GTO guarantee a minimum outcome?</div>
+          </td>
+          <td class="yes">Yes — GTO guarantees a minimum EV floor. Opponents can deviate, but they can only hurt themselves.</td>
+          <td class="no">No floor. Multiple Nash equilibria exist with different payoffs, and you can't force the best one.</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--cream);margin-bottom:0.2rem;">Value of chips</div>
+            <div style="font-size:0.8rem;color:var(--cream-dim);">Is each chip worth the same dollar amount?</div>
+          </td>
+          <td class="yes">Yes — 1 chip equals the same dollar value at every stack size.</td>
+          <td class="no">No — doubling your stack less than doubles your equity. ICM bends the chip-to-dollar curve.</td>
+        </tr>
+        <tr>
+          <td>
+            <div style="font-weight:600;color:var(--cream);margin-bottom:0.2rem;">Sitting out a hand</div>
+            <div style="font-size:0.8rem;color:var(--cream-dim);">Does your equity change while you're not in a pot?</div>
+          </td>
+          <td class="yes">Never. Your stack stays the same; your equity stays the same.</td>
+          <td class="no">Always. Every elimination moves you up the payout ladder, changing your $EV without touching your chips.</td>
+        </tr>
       </tbody>
     </table>
     <div class="source-quote" style="margin-top:1rem;">
