@@ -398,48 +398,6 @@ svg text {
 .yes { color: var(--green-bright); }
 .no { color: var(--red-bright); }
 
-/* ═══════════════════════════════════ POKER RANGE GRID ═══════════════════════════════════ */
-.range-grid-wrap {
-  overflow-x: auto;
-}
-
-.range-grid {
-  display: grid;
-  grid-template-columns: repeat(14, 1fr);
-  gap: 2px;
-  min-width: 520px;
-}
-
-.range-cell {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.55rem;
-  border-radius: 3px;
-  cursor: default;
-  transition: transform 0.1s, box-shadow 0.1s;
-  position: relative;
-}
-
-.range-cell:hover {
-  transform: scale(1.15);
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.range-cell.header {
-  background: transparent;
-  color: var(--gold-dim);
-  font-size: 0.6rem;
-  font-weight: 500;
-}
-
-.range-cell.always-call { background: #1a5c2a; color: #7effa0; }
-.range-cell.cash-only { background: #1a3a1a; color: #4a8a5a; }
-.range-cell.fold-both { background: #2a1a1a; color: #6a3a3a; }
-.range-cell.suited { background: rgba(255,255,255,0.03); }
 
 /* ═══════════════════════════════════ ICM FLOW ═══════════════════════════════════ */
 .flow-diagram {
@@ -1241,69 +1199,6 @@ svg text {
     </div>
   </div>
 
-  <!-- Range Grid -->
-  <div class="card">
-    <div class="card-title">Calling Range: Cash vs Tournament Bubble</div>
-    <div class="card-subtitle">Pot-sized bet on the river · Bubble with 30% ICM pressure</div>
-
-    <!-- Scenario context -->
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1.25rem;">
-      <div style="display:flex;flex-wrap:wrap;gap:2rem;align-items:flex-start;">
-        <div>
-          <div class="section-label" style="margin-bottom:0.4rem;">Scenario</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--cream-dim);line-height:1.8;">
-            <div>6-max · Money bubble · 25 BB effective</div>
-            <div>Hero in BB · Villain BTN open-shoves</div>
-            <div>Hero is big blind facing a push</div>
-          </div>
-        </div>
-        <div>
-          <div class="section-label" style="margin-bottom:0.4rem;">Board</div>
-          <div style="display:flex;gap:0.35rem;align-items:center;margin-top:0.1rem;">
-            <span style="background:#c0392b;color:#fff;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;padding:0.3rem 0.5rem;border-radius:4px;">K♥</span>
-            <span style="background:#c0392b;color:#fff;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;padding:0.3rem 0.5rem;border-radius:4px;">7♦</span>
-            <span style="background:#1a1a2e;color:#fff;border:1px solid #444;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;padding:0.3rem 0.5rem;border-radius:4px;">2♠</span>
-            <span style="background:#c0392b;color:#fff;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;padding:0.3rem 0.5rem;border-radius:4px;">9♥</span>
-            <span style="background:#1a1a2e;color:#fff;border:1px solid #444;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:600;padding:0.3rem 0.5rem;border-radius:4px;">3♣</span>
-          </div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cream-dim);margin-top:0.4rem;">Rainbow runout · No flush possible</div>
-        </div>
-        <div>
-          <div class="section-label" style="margin-bottom:0.4rem;">Action</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--cream-dim);line-height:1.8;">
-            <div>Villain bets pot (1×) on river</div>
-            <div>GTO MDF = <span style="color:var(--gold)">50%</span> of calling range</div>
-            <div>ICM-adjusted = <span style="color:var(--red-bright)">~35%</span> of calling range</div>
-          </div>
-        </div>
-        <div>
-          <div class="section-label" style="margin-bottom:0.4rem;">ICM Context</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--cream-dim);line-height:1.8;">
-            <div>Bubble: next out = min-cash</div>
-            <div>Losing = elimination, 0 prize</div>
-            <div>Risk premium ≈ 30%</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="range-grid-wrap">
-      <div class="range-grid" id="range-grid"></div>
-    </div>
-
-    <div style="margin-top:1rem;display:flex;gap:1.5rem;flex-wrap:wrap;">
-      <div class="legend-item"><div class="legend-dot" style="background:#1a5c2a;width:14px;height:14px;border-radius:3px;"></div>Call in both cash & tournament</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#1a3a1a;width:14px;height:14px;border-radius:3px;"></div>Call in cash, fold on bubble</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#2a1a1a;width:14px;height:14px;border-radius:3px;"></div>Fold in both</div>
-    </div>
-
-    <div class="insight-box" style="margin-top:1rem;">
-      <strong>Bubble Calling Range:</strong> On the bubble, we tighten vs a pot-sized bet from ~50% (GTO MDF) to ~35%.
-      This primarily drops the weakest bluffcatchers — 2nd and 3rd pair hands become folds.
-      Top pair and better hands remain calls in both contexts.
-    </div>
-  </div>
-
   <!-- Summary -->
   <div class="card">
     <h3>Worked Example: Bubble with 25BB</h3>
@@ -1339,7 +1234,7 @@ function showSection(id) {
   if (id === 'polarized') updatePolarized();
   if (id === 'traps') updateTraps();
   if (id === 'icm') { updateICM(); updateRiskPremium(); }
-  if (id === 'synthesis') { updateSynthesis(); buildRangeGrid(); }
+  if (id === 'synthesis') { updateSynthesis(); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2006,71 +1901,6 @@ function drawSynthBluffChart(betS, icmPressure) {
   svg.appendChild(svgText(pad.l+cW/2, H-5, 'Bet Size (× pot)', {fill:'#9a9080','font-size':'10','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
 }
 
-// ═══════════════════════════════════════════════════════
-//  RANGE GRID
-// ═══════════════════════════════════════════════════════
-function buildRangeGrid() {
-  const ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
-  const grid = document.getElementById('range-grid');
-  grid.innerHTML = '';
-
-  // Header row
-  grid.appendChild(makeRangeCell('', 'header'));
-  ranks.forEach(r => grid.appendChild(makeRangeCell(r, 'header')));
-
-  // Rank strength (0=worst, 12=best)
-  // Combined hand strength for 13x13 matrix
-  // Top-right = suited, bottom-left = offsuit
-  // We'll assign tier based on pair rank + combo type
-  ranks.forEach((r1, i) => {
-    grid.appendChild(makeRangeCell(r1, 'header'));
-    ranks.forEach((r2, j) => {
-      let tier, label;
-      if (i === j) {
-        // Pair
-        label = r1+r2;
-        tier = i <= 4 ? 'always-call' : i <= 7 ? 'cash-only' : 'fold-both';
-      } else if (j < i) {
-        // Suited (above diagonal) - j < i means... wait
-        // In standard format: row is first rank, col is second rank
-        // Above diagonal (j < i) = suited
-        label = r1+r2+'s';
-        const hi = Math.min(i,j), lo = Math.max(i,j);
-        const gap = lo - hi;
-        if (hi === 0 && gap <= 4) tier = 'always-call';
-        else if (hi <= 2 && gap <= 3) tier = 'always-call';
-        else if (hi <= 4 && gap <= 2) tier = 'cash-only';
-        else if (hi <= 6 && gap <= 1) tier = 'cash-only';
-        else tier = 'fold-both';
-      } else {
-        // Offsuit (below diagonal)
-        label = r1+r2+'o';
-        const hi = Math.min(i,j), lo = Math.max(i,j);
-        const gap = lo - hi;
-        if (hi === 0 && gap <= 3) tier = 'always-call';
-        else if (hi <= 1 && gap <= 2) tier = 'always-call';
-        else if (hi <= 3 && gap <= 2) tier = 'cash-only';
-        else if (hi <= 5 && gap <= 1) tier = 'cash-only';
-        else tier = 'fold-both';
-      }
-      grid.appendChild(makeRangeCell(label, tier));
-    });
-  });
-}
-
-function makeRangeCell(text, cls) {
-  const div = document.createElement('div');
-  div.className = 'range-cell ' + cls;
-  div.textContent = text;
-  if (cls !== 'header') {
-    div.title = text + ': ' + {
-      'always-call': 'Call in both cash game and tournament',
-      'cash-only': 'Call in cash game, fold on bubble (ICM pressure)',
-      'fold-both': 'Fold in both'
-    }[cls];
-  }
-  return div;
-}
 
 // ═══════════════════════════════════════════════════════
 //  INIT
