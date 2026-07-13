@@ -470,6 +470,25 @@ svg text {
 .badge-gold { color: var(--gold); border-color: var(--gold); background: rgba(212,175,55,0.1); }
 .badge-green { color: var(--green-bright); border-color: var(--green-bright); background: rgba(46,204,113,0.1); }
 .badge-red { color: var(--red-bright); border-color: var(--red-bright); background: rgba(231,76,60,0.1); }
+.badge-blue { color: var(--blue-bright); border-color: var(--blue-bright); background: rgba(52,152,219,0.1); }
+
+/* ═══════════════════════════════════ MINI BUTTONS ═══════════════════════════════════ */
+.mini-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--cream-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.28rem 0.65rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mini-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+
 
 /* ═══════════════════════════════════ MDF BAR COMPARISON ═══════════════════════════════════ */
 .mdf-bar-group { margin-bottom: 0.75rem; }
@@ -715,14 +734,14 @@ svg text {
   <div class="section-hero">
     <div class="section-label">Toy Game 1</div>
     <h1>Polarized vs Bluffcatcher</h1>
-    <p>The foundational river model. Bettor holds nuts or air. Caller holds bluffcatchers.</p>
+    <p>The foundational river model. Bettor holds nuts or air. Caller holds bluffcatchers. Now with the dials unlocked — over-bluff, under-bluff, over-call, under-call, and watch who bleeds EV.</p>
   </div>
 
   <div class="grid-2">
     <!-- Controls -->
     <div class="card">
       <div class="card-title">Controls</div>
-      <div class="card-subtitle">River · Pot = 1 unit</div>
+      <div class="card-subtitle">River · Pot = 1 unit · Bettor range: 50% nuts / 50% air</div>
 
       <div class="control-group">
         <div class="control-label">
@@ -735,6 +754,42 @@ svg text {
         </div>
       </div>
 
+      <div class="control-group">
+        <div class="control-label">
+          <span>Bluff Frequency (how often air bets)</span>
+          <span style="display:flex;align-items:center;gap:0.6rem;">
+            <span class="badge badge-gold" id="p-f-badge">Balanced</span>
+            <span class="control-value" id="p-f-display">33%</span>
+          </span>
+        </div>
+        <input type="range" id="p-f" min="0" max="100" value="33" oninput="updatePolarized()">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cream-dim);margin-top:0.3rem;">
+          <span>Never bluff</span><span id="p-f-gto">GTO: 33%</span><span>Always bluff</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <button class="mini-btn" onclick="snapBluffGTO()">↺ Snap to GTO</button>
+          <button class="mini-btn" onclick="snapBluffExploit()">⚔ Best-Respond to Caller</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Call Frequency (bluffcatcher defends)</span>
+          <span style="display:flex;align-items:center;gap:0.6rem;">
+            <span class="badge badge-gold" id="p-c-badge">MDF ✓</span>
+            <span class="control-value" id="p-c-display">67%</span>
+          </span>
+        </div>
+        <input type="range" id="p-c" min="0" max="100" value="67" oninput="updatePolarized()">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--cream-dim);margin-top:0.3rem;">
+          <span>Always fold</span><span id="p-c-gto">MDF: 67%</span><span>Always call</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <button class="mini-btn" onclick="snapCallGTO()">↺ Snap to MDF</button>
+          <button class="mini-btn" onclick="snapCallExploit()">⚔ Best-Respond to Bettor</button>
+        </div>
+      </div>
+
       <hr class="divider">
 
       <div class="stat-grid" id="p-stats">
@@ -744,29 +799,39 @@ svg text {
           <div class="stat-formula">1 / (1+s)</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">Fold Freq</div>
-          <div class="stat-value" id="p-fold">33%</div>
-          <div class="stat-formula">s / (1+s)</div>
+          <div class="stat-label">Pot Odds</div>
+          <div class="stat-value" id="p-pot-odds">25%</div>
+          <div class="stat-formula">s / (1+2s)</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">Bluff %</div>
+          <div class="stat-label">Bluffs in Bet Range</div>
           <div class="stat-value" id="p-bluff-pct">25%</div>
-          <div class="stat-formula">s / (1+2s)</div>
+          <div class="stat-formula" id="p-bluff-gto">GTO: s/(1+2s) = 25%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Caller Defends</div>
+          <div class="stat-value" id="p-call-freq">67%</div>
+          <div class="stat-formula" id="p-call-note">MDF: 67%</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">Value EV</div>
           <div class="stat-value" id="p-val-ev">1.33x</div>
-          <div class="stat-formula">(1+2s) / (1+s)</div>
+          <div class="stat-formula">1 + call × s</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">Bluff EV</div>
-          <div class="stat-value" style="color:var(--cream-dim)">0.00x</div>
-          <div class="stat-formula">always 0</div>
+          <div class="stat-value" id="p-bluff-ev">0.00x</div>
+          <div class="stat-formula">1 − call × (1+s)</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">Pot Odds</div>
-          <div class="stat-value" id="p-pot-odds">25%</div>
-          <div class="stat-formula">s / (1+2s)</div>
+          <div class="stat-label">Bettor Range EV</div>
+          <div class="stat-value" id="p-range-ev">0.67x</div>
+          <div class="stat-formula" id="p-range-gto">GTO: 0.67x</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Caller Range EV</div>
+          <div class="stat-value" id="p-caller-ev">0.33x</div>
+          <div class="stat-formula" id="p-caller-gto">GTO: 0.33x</div>
         </div>
       </div>
 
@@ -786,8 +851,10 @@ svg text {
 
     <!-- Range Composition -->
     <div class="card">
-      <div class="card-title">Betting Range Composition</div>
-      <div class="card-subtitle">Bettor's optimal mix of value vs bluffs</div>
+      <div class="card-title">Range Composition & Exploits</div>
+      <div class="card-subtitle">Both players' actual strategies — and who is exploitable</div>
+
+      <div class="insight-box" id="p-status-insight" style="margin:0 0 1.25rem;"></div>
 
       <div class="chart-wrap">
         <div class="chart-title">Betting Range Split</div>
@@ -808,22 +875,45 @@ svg text {
           <div class="range-segment" id="p-fold-seg" style="background:linear-gradient(90deg,#2a2a2a,#555);color:#999;"></div>
         </div>
         <div class="range-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div>Call (MDF)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div>Call</div>
           <div class="legend-item"><div class="legend-dot" style="background:#555"></div>Fold</div>
         </div>
       </div>
 
       <div class="chart-wrap">
-        <div class="chart-title">Bluff Indifference — EV by Action</div>
+        <div class="chart-title" id="p-bluffbar-title">Bluff EV — Fold Gain vs Call Cost</div>
         <svg id="p-bluff-ev-chart" width="100%" height="80" viewBox="0 0 400 80"></svg>
       </div>
+    </div>
+  </div>
+
+  <!-- Exploitation Map -->
+  <div class="card">
+    <div class="card-title">The Exploitation Map</div>
+    <div class="card-subtitle">What each deviation costs — or earns — against different opponents</div>
+    <div class="grid-2">
+      <div class="chart-wrap">
+        <div class="chart-title">Bettor Range EV vs Bluff Frequency</div>
+        <svg id="p-exploit-bettor" width="100%" height="260" viewBox="0 0 400 260"></svg>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Caller Range EV vs Call Frequency</div>
+        <svg id="p-exploit-caller" width="100%" height="260" viewBox="0 0 400 260"></svg>
+      </div>
+    </div>
+    <div class="insight-box">
+      <strong>Takeaway:</strong> Against a best-responding opponent, the bettor's EV is a tent peaking exactly at the GTO
+      bluffing frequency — over-bluff and every extra bluff gets snapped off, under-bluff and your value bets stop getting
+      paid. The caller's EV is a straight line in call frequency: perfectly flat when the bettor is balanced (MDF is
+      indifferent), but tilted the moment the bettor deviates — call <em>everything</em> vs an over-bluffer, fold
+      <em>everything</em> vs an under-bluffer.
     </div>
   </div>
 
   <!-- EV Curve -->
   <div class="card">
     <div class="card-title">Value EV Curve vs Bet Size</div>
-    <div class="card-subtitle">How much EV does the value hand extract at each bet size?</div>
+    <div class="card-subtitle">How much EV does the value hand extract at each bet size? (at equilibrium frequencies)</div>
     <div class="chart-wrap">
       <svg id="p-ev-curve" width="100%" height="280" viewBox="0 0 800 280"></svg>
     </div>
@@ -1267,49 +1357,143 @@ function svgPath(d, attrs={}) {
 // ═══════════════════════════════════════════════════════
 //  POLARIZED GAME
 // ═══════════════════════════════════════════════════════
-function updatePolarized() {
-  const s = document.getElementById('p-s').value / 100;
-  document.getElementById('p-s-display').textContent = s.toFixed(2) + 'x';
+// Model: bettor range is 50% nuts / 50% air (the GTOWizard AA/QQ setup).
+// Nuts always bet. Air bluffs with frequency f. Caller defends with frequency c.
+// Bluff share of betting range: b = f/(1+f). Equilibrium: f* = s/(1+s), b* = s/(1+2s), c* = MDF = 1/(1+s).
+const P_EPS = 0.008;
 
+function polarizedState() {
+  const s = document.getElementById('p-s').value / 100;
+  const f = document.getElementById('p-f').value / 100;
+  const c = document.getElementById('p-c').value / 100;
   const mdf = 1/(1+s);
-  const fold = s/(1+s);
-  const bluffPct = s/(1+2*s);
-  const valuePct = (1+s)/(1+2*s);
-  const valEV = (1+2*s)/(1+s);
-  const potOdds = s/(1+2*s);
+  const fStar = s/(1+s);
+  const b = f/(1+f);
+  const bStar = s/(1+2*s);
+  const bettorRegime = Math.abs(f - fStar) <= P_EPS ? 'balanced' : (f > fStar ? 'over' : 'under');
+  const callerRegime = Math.abs(c - mdf) <= P_EPS ? 'balanced' : (c > mdf ? 'over' : 'under');
+  return {s, f, c, mdf, fStar, b, bStar, bettorRegime, callerRegime};
+}
+
+function snapBluffGTO() {
+  const s = document.getElementById('p-s').value / 100;
+  document.getElementById('p-f').value = Math.round(100 * s/(1+s));
+  updatePolarized();
+}
+function snapCallGTO() {
+  const s = document.getElementById('p-s').value / 100;
+  document.getElementById('p-c').value = Math.round(100 / (1+s));
+  updatePolarized();
+}
+function snapBluffExploit() {
+  const st = polarizedState();
+  // Bettor's best response to caller: under-caller → always bluff; over-caller → never bluff; MDF → GTO mix
+  if (st.callerRegime === 'under') document.getElementById('p-f').value = 100;
+  else if (st.callerRegime === 'over') document.getElementById('p-f').value = 0;
+  else document.getElementById('p-f').value = Math.round(100 * st.fStar);
+  updatePolarized();
+}
+function snapCallExploit() {
+  const st = polarizedState();
+  // Caller's best response to bettor: over-bluffer → always call; under-bluffer → always fold; balanced → MDF
+  if (st.bettorRegime === 'over') document.getElementById('p-c').value = 100;
+  else if (st.bettorRegime === 'under') document.getElementById('p-c').value = 0;
+  else document.getElementById('p-c').value = Math.round(100 * st.mdf);
+  updatePolarized();
+}
+
+function setBadge(id, regime, overText, underText, balText) {
+  const el = document.getElementById(id);
+  if (regime === 'balanced') { el.className = 'badge badge-gold'; el.textContent = balText; }
+  else if (regime === 'over') { el.className = 'badge badge-red'; el.textContent = overText; }
+  else { el.className = 'badge badge-blue'; el.textContent = underText; }
+}
+
+function updatePolarized() {
+  const st = polarizedState();
+  const {s, f, c, mdf, fStar, b, bStar} = st;
+
+  document.getElementById('p-s-display').textContent = s.toFixed(2) + 'x';
+  document.getElementById('p-f-display').textContent = pct(f);
+  document.getElementById('p-c-display').textContent = pct(c);
+  document.getElementById('p-f-gto').textContent = 'GTO: ' + pct(fStar);
+  document.getElementById('p-c-gto').textContent = 'MDF: ' + pct(mdf);
+
+  setBadge('p-f-badge', st.bettorRegime, 'Overbluffing', 'Underbluffing', 'Balanced ✓');
+  setBadge('p-c-badge', st.callerRegime, 'Overcalling', 'Undercalling', 'MDF ✓');
+
+  // Core EVs (units of pot). valEV/bluffEV are per value bet / per bluff.
+  const valEV = 1 + c*s;
+  const bluffEV = 1 - c*(1+s);
+  const bettorEV = 0.5*valEV + 0.5*f*bluffEV;       // air that checks gets 0
+  const callerEV = 1 - bettorEV;                     // fixed pot of 1 gets split
+  const eqBettor = 0.5*(1+2*s)/(1+s);
+  const eqCaller = 1 - eqBettor;
 
   document.getElementById('p-mdf').textContent = pct(mdf);
-  document.getElementById('p-fold').textContent = pct(fold);
-  document.getElementById('p-bluff-pct').textContent = pct(bluffPct);
+  document.getElementById('p-pot-odds').textContent = pct(s/(1+2*s));
+  document.getElementById('p-bluff-pct').textContent = pct(b);
+  document.getElementById('p-bluff-gto').textContent = 'GTO: s/(1+2s) = ' + pct(bStar);
+  document.getElementById('p-call-freq').textContent = pct(c);
+  document.getElementById('p-call-note').textContent = 'MDF: ' + pct(mdf);
   document.getElementById('p-val-ev').textContent = fmt(valEV);
-  document.getElementById('p-pot-odds').textContent = pct(potOdds);
+
+  const bluffEVEl = document.getElementById('p-bluff-ev');
+  const dispBluffEV = st.callerRegime === 'balanced' ? 0 : bluffEV;  // hide slider-granularity dust at MDF
+  bluffEVEl.textContent = (dispBluffEV > 0 ? '+' : '') + dispBluffEV.toFixed(2) + 'x';
+  bluffEVEl.style.color = bluffEV > P_EPS ? 'var(--green-bright)' : (bluffEV < -P_EPS ? 'var(--red-bright)' : 'var(--cream-dim)');
+
+  const rangeEVEl = document.getElementById('p-range-ev');
+  rangeEVEl.textContent = fmt(bettorEV);
+  rangeEVEl.style.color = bettorEV > eqBettor + P_EPS ? 'var(--green-bright)' : (bettorEV < eqBettor - P_EPS ? 'var(--red-bright)' : 'var(--gold)');
+  document.getElementById('p-range-gto').textContent = 'GTO: ' + fmt(eqBettor);
+
+  const callerEVEl = document.getElementById('p-caller-ev');
+  callerEVEl.textContent = fmt(callerEV);
+  callerEVEl.style.color = callerEV > eqCaller + P_EPS ? 'var(--green-bright)' : (callerEV < eqCaller - P_EPS ? 'var(--red-bright)' : 'var(--gold)');
+  document.getElementById('p-caller-gto').textContent = 'GTO: ' + fmt(eqCaller);
 
   // Range bar
   const vSeg = document.getElementById('p-value-seg');
   const bSeg = document.getElementById('p-bluff-seg');
-  vSeg.style.width = pct(valuePct);
-  bSeg.style.width = pct(bluffPct);
-  vSeg.textContent = valuePct > 0.15 ? pct(valuePct) + ' Value' : '';
-  bSeg.textContent = bluffPct > 0.1 ? pct(bluffPct) + ' Bluff' : '';
+  vSeg.style.width = pct(1-b);
+  bSeg.style.width = pct(b);
+  vSeg.textContent = (1-b) > 0.15 ? pct(1-b) + ' Value' : '';
+  bSeg.textContent = b > 0.1 ? pct(b) + ' Bluff' : '';
 
   // Caller bar
-  document.getElementById('p-call-seg').style.width = pct(mdf);
-  document.getElementById('p-fold-seg').style.width = pct(fold);
-  document.getElementById('p-call-seg').textContent = mdf > 0.1 ? pct(mdf) + ' Call' : '';
-  document.getElementById('p-fold-seg').textContent = fold > 0.1 ? pct(fold) + ' Fold' : '';
+  document.getElementById('p-call-seg').style.width = pct(c);
+  document.getElementById('p-fold-seg').style.width = pct(1-c);
+  document.getElementById('p-call-seg').textContent = c > 0.1 ? pct(c) + ' Call' : '';
+  document.getElementById('p-fold-seg').textContent = (1-c) > 0.1 ? pct(1-c) + ' Fold' : '';
 
-  drawBluffEVBar(s, mdf);
+  // Status narrative
+  const msgs = [];
+  if (st.bettorRegime === 'balanced' && st.callerRegime === 'balanced') {
+    msgs.push('<strong>Equilibrium.</strong> The bettor\'s bluff ratio makes calling and folding worth the same, and the caller\'s MDF makes bluffing and giving up worth the same. Neither side can gain by deviating.');
+  } else {
+    if (st.bettorRegime === 'over') msgs.push(`<strong>Overbluffing:</strong> ${pct(b)} of the betting range is bluffs (GTO: ${pct(bStar)}). Calling a bluffcatcher now has positive EV — the caller should call <em>everything</em>.`);
+    if (st.bettorRegime === 'under') msgs.push(`<strong>Underbluffing:</strong> only ${pct(b)} of the betting range is bluffs (GTO: ${pct(bStar)}). Bets are too value-heavy — the caller should fold <em>everything</em>.`);
+    if (st.callerRegime === 'over') msgs.push(`<strong>Overcalling:</strong> defending ${pct(c)} vs MDF ${pct(mdf)}. Each bluff now loses ${Math.abs(bluffEV).toFixed(2)} pot — the bettor should stop bluffing entirely and value-bet relentlessly.`);
+    if (st.callerRegime === 'under') msgs.push(`<strong>Undercalling:</strong> defending only ${pct(c)} vs MDF ${pct(mdf)}. Each bluff prints +${bluffEV.toFixed(2)} pot — the bettor should bluff every single air hand.`);
+    const d = bettorEV - eqBettor;
+    if (Math.abs(d) > P_EPS) msgs.push(`Net result: the <strong>${d > 0 ? 'bettor' : 'caller'}</strong> is winning ${Math.abs(d).toFixed(2)} pot per hand relative to equilibrium.`);
+    else msgs.push('Net result: the deviations currently cancel out — but both players are one adjustment away from getting exploited.');
+  }
+  document.getElementById('p-status-insight').innerHTML = msgs.join(' ');
+
+  drawBluffEVBar(s, c, bluffEV);
+  drawExploitBettorChart(st);
+  drawExploitCallerChart(st);
   drawPolarizedEVCurve(s);
 }
 
-function drawBluffEVBar(s, mdf) {
+function drawBluffEVBar(s, c, bluffEV) {
   const svg = document.getElementById('p-bluff-ev-chart');
   svg.innerHTML = '';
-  const W = 400, H = 80;
-  const fold = s/(1+s);
-  const winPot = fold * 1; // EV from folds (fraction of pot)
-  const loseBet = (1-fold) * s; // EV lost to calls
-  // Show two bars: gain from folds, cost of calls
+  const W = 400;
+  const winPot = (1-c) * 1;   // EV from folds (fraction of pot)
+  const loseBet = c * s;      // EV lost to calls
   const maxVal = Math.max(winPot, loseBet) + 0.05;
   const scale = (W*0.35) / maxVal;
 
@@ -1319,26 +1503,115 @@ function drawBluffEVBar(s, mdf) {
 
   // Gain bar (folds)
   const gainW = winPot * scale;
-  const r1 = makeSVGEl('rect', {x: midX, y: y1, width: gainW, height: barH, fill:'#27ae60', rx:3});
-  svg.appendChild(r1);
-  const t1 = svgText(midX + gainW + 5, y1+14, `+${(winPot*100).toFixed(1)}%`, {fill:'#7effa0','font-size':'10','font-family':'JetBrains Mono,monospace'});
-  svg.appendChild(t1);
-  const l1 = svgText(midX - 5, y1+14, 'Fold gain', {fill:'#9a9080','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'});
-  svg.appendChild(l1);
+  svg.appendChild(makeSVGEl('rect', {x: midX, y: y1, width: gainW, height: barH, fill:'#27ae60', rx:3}));
+  svg.appendChild(svgText(midX + gainW + 5, y1+14, `+${(winPot*100).toFixed(1)}%`, {fill:'#7effa0','font-size':'10','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText(midX - 5, y1+14, 'Fold gain', {fill:'#9a9080','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
 
   // Loss bar (calls)
   const lossW = loseBet * scale;
-  const r2 = makeSVGEl('rect', {x: midX - lossW, y: y2, width: lossW, height: barH, fill:'#c0392b', rx:3});
-  svg.appendChild(r2);
-  const t2 = svgText(midX - lossW - 5, y2+14, `-${(loseBet*100).toFixed(1)}%`, {fill:'#ffaaaa','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'});
-  svg.appendChild(t2);
-  const l2 = svgText(midX + 5, y2+14, 'Call loss', {fill:'#9a9080','font-size':'10','font-family':'JetBrains Mono,monospace'});
-  svg.appendChild(l2);
+  svg.appendChild(makeSVGEl('rect', {x: midX - lossW, y: y2, width: lossW, height: barH, fill:'#c0392b', rx:3}));
+  svg.appendChild(svgText(midX - lossW - 5, y2+14, `-${(loseBet*100).toFixed(1)}%`, {fill:'#ffaaaa','font-size':'10','text-anchor':'end','font-family':'JetBrains Mono,monospace'}));
+  svg.appendChild(svgText(midX + 5, y2+14, 'Call loss', {fill:'#9a9080','font-size':'10','font-family':'JetBrains Mono,monospace'}));
 
-  // Center line
+  // Center line + net label
   svg.appendChild(svgLine(midX, 10, midX, 78, {stroke:'rgba(212,175,55,0.4)', 'stroke-width':1, 'stroke-dasharray':'3,3'}));
-  const eq = svgText(midX, 9, 'NET EV = 0 ✓', {fill:'#d4af37','font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'});
-  svg.appendChild(eq);
+  let netText, netColor;
+  if (bluffEV > P_EPS) { netText = `NET EV = +${(bluffEV*100).toFixed(1)}% — bluffs print`; netColor = '#2ecc71'; }
+  else if (bluffEV < -P_EPS) { netText = `NET EV = −${(Math.abs(bluffEV)*100).toFixed(1)}% — bluffs burn`; netColor = '#e74c3c'; }
+  else { netText = 'NET EV = 0 ✓ indifferent'; netColor = '#d4af37'; }
+  svg.appendChild(svgText(midX, 9, netText, {fill:netColor,'font-size':'9','text-anchor':'middle','font-family':'JetBrains Mono,monospace'}));
+}
+
+function drawExploitBettorChart(st) {
+  const svg = document.getElementById('p-exploit-bettor');
+  svg.innerHTML = '';
+  const W = 400, H = 260;
+  const pad = {l:48, r:16, t:18, b:44};
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  const {s, f, c, fStar} = st;
+  const yMin = 0.35, yMax = 1.0;
+  const xScale = v => pad.l + v*cW;
+  const yScale = v => pad.t + cH - ((clamp(v,yMin,yMax)-yMin)/(yMax-yMin))*cH;
+
+  // EV of bettor's whole range at bluff freq ff...
+  const evVs = (ff, cc) => 0.5*(1 + cc*s) + 0.5*ff*(1 - cc*(1+s));      // vs fixed caller
+  const evBR = ff => ff <= fStar ? 0.5*(1+ff) : 0.5*(1+s-ff*s);          // vs best-responding caller
+
+  // Grid
+  for (let y = 0.4; y <= 1.0; y += 0.1) {
+    svg.appendChild(svgLine(pad.l, yScale(y), pad.l+cW, yScale(y), {stroke:'rgba(255,255,255,0.06)','stroke-width':1}));
+    svg.appendChild(svgText(pad.l-4, yScale(y)+3, y.toFixed(1), {fill:'#6a6060','font-size':'9','text-anchor':'end'}));
+  }
+  [0,0.25,0.5,0.75,1].forEach(x => {
+    svg.appendChild(svgText(xScale(x), pad.t+cH+12, pct(x), {fill:'#6a6060','font-size':'9','text-anchor':'middle'}));
+  });
+  svg.appendChild(svgText(pad.l+cW/2, H-6, 'Bluff frequency (air bets)', {fill:'#9a9080','font-size':'10','text-anchor':'middle'}));
+
+  // vs best-response caller: the tent
+  const tent = `M${xScale(0)},${yScale(evBR(0))} L${xScale(fStar)},${yScale(evBR(fStar))} L${xScale(1)},${yScale(evBR(1))}`;
+  svg.appendChild(svgPath(tent, {fill:'none', stroke:'#d4af37', 'stroke-width':'2.5'}));
+
+  // vs the CURRENT caller (slider c): a straight line, flat iff c = MDF
+  svg.appendChild(svgLine(xScale(0), yScale(evVs(0,c)), xScale(1), yScale(evVs(1,c)), {stroke:'#3498db','stroke-width':2,'stroke-dasharray':'6,3'}));
+
+  // GTO marker
+  svg.appendChild(svgLine(xScale(fStar), pad.t, xScale(fStar), pad.t+cH, {stroke:'rgba(212,175,55,0.35)','stroke-width':1,'stroke-dasharray':'3,3'}));
+  svg.appendChild(svgText(xScale(fStar), pad.t-6, 'GTO ' + pct(fStar), {fill:'#d4af37','font-size':'9','text-anchor':'middle'}));
+
+  // Current position on the current-caller line
+  const cur = evVs(f, c);
+  svg.appendChild(makeSVGEl('circle', {cx:xScale(f), cy:yScale(cur), r:5, fill:'#3498db', stroke:'#060f1a','stroke-width':2}));
+  svg.appendChild(svgText(clamp(xScale(f)+8, pad.l, pad.l+cW-40), yScale(cur)-8, cur.toFixed(2)+'x', {fill:'#a8d4ff','font-size':'10','font-weight':'bold'}));
+
+  // Legend (top-left, inside plot)
+  svg.appendChild(svgLine(pad.l+8, pad.t+10, pad.l+28, pad.t+10, {stroke:'#d4af37','stroke-width':2.5}));
+  svg.appendChild(svgText(pad.l+32, pad.t+13, 'vs best-response caller', {fill:'#9a9080','font-size':'8.5'}));
+  svg.appendChild(svgLine(pad.l+8, pad.t+24, pad.l+28, pad.t+24, {stroke:'#3498db','stroke-width':2,'stroke-dasharray':'6,3'}));
+  svg.appendChild(svgText(pad.l+32, pad.t+27, 'vs current caller', {fill:'#9a9080','font-size':'8.5'}));
+}
+
+function drawExploitCallerChart(st) {
+  const svg = document.getElementById('p-exploit-caller');
+  svg.innerHTML = '';
+  const W = 400, H = 260;
+  const pad = {l:48, r:16, t:18, b:44};
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  const {s, f, c, mdf} = st;
+  const yMin = 0.0, yMax = 0.7;
+  const xScale = v => pad.l + v*cW;
+  const yScale = v => pad.t + cH - ((clamp(v,yMin,yMax)-yMin)/(yMax-yMin))*cH;
+
+  // Caller EV = 1 − bettor EV, linear in call frequency cc (given the bettor's current f)
+  const callerEV = cc => 1 - (0.5*(1 + cc*s) + 0.5*f*(1 - cc*(1+s)));
+
+  for (let y = 0; y <= 0.7; y += 0.1) {
+    svg.appendChild(svgLine(pad.l, yScale(y), pad.l+cW, yScale(y), {stroke:'rgba(255,255,255,0.06)','stroke-width':1}));
+    svg.appendChild(svgText(pad.l-4, yScale(y)+3, y.toFixed(1), {fill:'#6a6060','font-size':'9','text-anchor':'end'}));
+  }
+  [0,0.25,0.5,0.75,1].forEach(x => {
+    svg.appendChild(svgText(xScale(x), pad.t+cH+12, pct(x), {fill:'#6a6060','font-size':'9','text-anchor':'middle'}));
+  });
+  svg.appendChild(svgText(pad.l+cW/2, H-6, 'Call frequency', {fill:'#9a9080','font-size':'10','text-anchor':'middle'}));
+
+  // The line (flat iff bettor balanced)
+  svg.appendChild(svgLine(xScale(0), yScale(callerEV(0)), xScale(1), yScale(callerEV(1)), {stroke:'#3498db','stroke-width':2.5}));
+
+  // MDF marker
+  svg.appendChild(svgLine(xScale(mdf), pad.t, xScale(mdf), pad.t+cH, {stroke:'rgba(212,175,55,0.35)','stroke-width':1,'stroke-dasharray':'3,3'}));
+  svg.appendChild(svgText(xScale(mdf), pad.t-6, 'MDF ' + pct(mdf), {fill:'#d4af37','font-size':'9','text-anchor':'middle'}));
+
+  // Current position
+  const cur = callerEV(c);
+  svg.appendChild(makeSVGEl('circle', {cx:xScale(c), cy:yScale(cur), r:5, fill:'#3498db', stroke:'#060f1a','stroke-width':2}));
+  svg.appendChild(svgText(clamp(xScale(c)+8, pad.l, pad.l+cW-40), yScale(cur)-8, cur.toFixed(2)+'x', {fill:'#a8d4ff','font-size':'10','font-weight':'bold'}));
+
+  // Slope annotation
+  const slope = 0.5*(f*(1+s) - s);
+  let hint;
+  if (slope > 0.004) hint = 'Bettor over-bluffs → line tilts up → call more';
+  else if (slope < -0.004) hint = 'Bettor under-bluffs → line tilts down → fold more';
+  else hint = 'Bettor balanced → flat line → any call freq ties';
+  svg.appendChild(svgText(pad.l+8, pad.t+13, hint, {fill:'#9a9080','font-size':'8.5'}));
 }
 
 function drawPolarizedEVCurve(currentS) {
